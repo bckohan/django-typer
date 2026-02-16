@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-typer"
-version = "3.6.1"
+version = "3.6.2"
 requires-python = ">=3.10,<4.0"
 description = "Use Typer to define the CLI for your Django management commands."
 authors = [
@@ -23,7 +23,7 @@ dependencies = [
     "click>=8.1.8,<8.4",
     # given the reliance on private Typer internals we peg the
     # version very strictly to bug fix releases for specific feature lines.
-    "typer>=0.23.1,<0.24.0",
+    "typer>=0.23.1,<0.25.0",
 ]
 classifiers = [
     "Environment :: Console",
