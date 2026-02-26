@@ -7,6 +7,7 @@ on:
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions: read-all
 
