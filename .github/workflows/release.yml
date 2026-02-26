@@ -45,7 +45,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
       with:
-        python-version: "3.12"  # for tomlib
+        python-version: "3.14"  # for tomlib
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:

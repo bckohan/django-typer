@@ -12,6 +12,8 @@
 [![Test Status](https://github.com/django-commons/django-typer/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/django-commons/django-typer/actions/workflows/test.yml?query=branch:main)
 [![Lint Status](https://github.com/django-commons/django-typer/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/django-commons/django-typer/actions/workflows/lint.yml?query=branch:main)
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-typer/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/django-commons/django-typer/badge)](https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-typer)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12046/badge)](https://www.bestpractices.dev/projects/12046)
 
 Use static typing to define the CLI for your [Django](https://www.djangoproject.com/) management commands with [Typer](https://typer.tiangolo.com/). Optionally use the provided [TyperCommand](https://django-typer.readthedocs.io/en/latest/reference.html#django_typer.TyperCommand) class that inherits from [BaseCommand](https://docs.djangoproject.com/en/stable/howto/custom-management-commands/#django.core.management.BaseCommand). This class maps the [Typer](https://typer.tiangolo.com/) interface onto a class based interface that Django developers will be familiar with. All of the [BaseCommand](https://docs.djangoproject.com/en/stable/howto/custom-management-commands/#django.core.management.BaseCommand) functionality is inherited, so that [TyperCommand](https://django-typer.readthedocs.io/en/latest/reference.html#django_typer.TyperCommand) can be a drop in replacement.
 

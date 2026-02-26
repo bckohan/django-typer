@@ -5,6 +5,52 @@
 Django Typer
 ============
 
+|MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
+|Documentation Status| |Code Cov| |Test Status| |Lint Status|
+
+
+|Django Packages| |OpenSSF Scorecard| |OpenSSF Best Practices|
+
+.. |MIT license| image:: https://img.shields.io/badge/License-MIT-blue.svg
+   :target: https://lbesson.mit-license.org/
+
+.. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+   :target: https://docs.astral.sh/ruff
+
+.. |PyPI version fury.io| image:: https://badge.fury.io/py/django-typer.svg
+   :target: https://pypi.python.org/pypi/django-typer/
+
+.. |PyPI pyversions| image:: https://img.shields.io/pypi/pyversions/django-typer.svg
+   :target: https://pypi.python.org/pypi/django-typer/
+
+.. |PyPI djversions| image:: https://img.shields.io/pypi/djversions/django-typer.svg
+   :target: https://pypi.org/project/django-typer/
+
+.. |PyPI status| image:: https://img.shields.io/pypi/status/django-typer.svg
+   :target: https://pypi.python.org/pypi/django-typer
+
+.. |Documentation Status| image:: https://readthedocs.org/projects/django-typer/badge/?version=latest
+   :target: http://django-typer.readthedocs.io/?badge=latest/
+
+.. |Code Cov| image:: https://codecov.io/gh/django-commons/django-typer/branch/main/graph/badge.svg?token=0IZOKN2DYL
+   :target: https://codecov.io/gh/django-commons/django-typer
+
+.. |Test Status| image:: https://github.com/django-commons/django-typer/actions/workflows/test.yml/badge.svg?branch=main
+   :target: https://github.com/django-commons/django-typer/actions/workflows/test.yml
+
+.. |Lint Status| image:: https://github.com/django-commons/django-typer/actions/workflows/lint.yml/badge.svg
+   :target: https://github.com/django-commons/django-typer/actions/workflows/lint.yml
+
+.. |Django Packages| image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
+   :target: https://djangopackages.org/packages/p/django-typer/
+
+.. |OpenSSF Scorecard| image:: https://api.securityscorecards.dev/projects/github.com/django-commons/django-typer/badge
+   :target: https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-typer
+
+.. |OpenSSF Best Practices| image:: https://www.bestpractices.dev/projects/12046/badge
+   :target: https://www.bestpractices.dev/projects/12046
+
+
 Use static typing to define the CLI for your Django_ management commands with Typer_. Optionally
 use the provided :class:`~django_typer.management.TyperCommand` class that inherits from
 :class:`~django.core.management.BaseCommand`. This class maps the Typer_ interface onto a class

@@ -84,8 +84,6 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Run Static Analysis
         run: |

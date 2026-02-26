@@ -74,8 +74,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
       timeout-minutes: 60
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
@@ -155,8 +153,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: install-vim-windows
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: rhysd/action-setup-vim@19e3dd31a84dbc2c5445d65e9b363f616cab96c1
@@ -240,8 +236,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -329,8 +323,6 @@ jobs:
         - name: setup-ssh-debug
           if: ${{ github.event.inputs.debug == 'true' }}
           uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-          with:
-            detached: true
         - name: Install uv
           uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
           with:
@@ -408,8 +400,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -491,8 +481,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -577,8 +565,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -669,8 +655,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -751,8 +735,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
@@ -840,8 +822,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Add to Just to PATH
       run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
       shell: powershell
@@ -935,8 +915,6 @@ jobs:
     - name: setup-ssh-debug
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
     - name: Add to Just to PATH
       run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
       shell: pwsh
@@ -1005,8 +983,6 @@ jobs:
       - name: setup-ssh-debug
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
