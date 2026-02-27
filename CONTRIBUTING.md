@@ -12,13 +12,13 @@ We provide a platform independent justfile with recipes for all the development 
 
 `django-typer` uses [uv](https://docs.astral.sh/uv) for environment, package, and dependency management. ``just setup`` will install the necessary build tooling if you do not already have it:
 
-```bash
+```sh
 just setup <python version>
 ```
 
 **This will also install pre-commit** If you wish to submit code that does not pass pre-commit checks you can disable pre-commit by running:
 
-```bash
+```sh
 just run pre-commit uninstall
 ```
 
@@ -26,7 +26,7 @@ just run pre-commit uninstall
 
 To install all development dependencies run the ``install`` recipe:
 
-```bash
+```sh
 just install
 ```
 
@@ -42,7 +42,7 @@ git config --global core.symlinks true
 
 `django-typer` documentation is generated using [Sphinx](https://www.sphinx-doc.org) with the [furo](https://github.com/pradyunsg/furo) theme. Any new feature PRs must provide updated documentation for the features added. To build the docs run doc8 to check for formatting issues then run Sphinx:
 
-```bash
+```sh
 just docs  # builds docs
 just check-docs  # lint the docs
 just check-docs-links  # check for broken links in the docs
@@ -50,7 +50,7 @@ just check-docs-links  # check for broken links in the docs
 
 Run the docs with auto rebuild using:
 
-```bash
+```sh
 just docs-live
 ```
 
@@ -60,13 +60,13 @@ just docs-live
 
 To fix formatting and linting problems that are fixable run:
 
-```bash
+```sh
 just fix
 ```
 
 To run all static analysis without automated fixing you can run:
 
-```bash
+```sh
 just check
 ```
 
@@ -74,21 +74,26 @@ just check
 
 `django-typer` is set up to use [pytest](https://docs.pytest.org) to run unit tests. All the tests are housed in `tests`. Before a PR is accepted, all tests must be passing and the code coverage must be at 100%. A small number of exempted error handling branches are acceptable.
 
-To run the full suite:
+To run the full suite in an isolated virtual environment with only the minimal test dependencies installed you should use ``test-all``:
 
-```shell
+```sh
 just test-all
 ```
+To run the full test suite against a specific python/django you can pass sync options to ``test-all``. This requires the djXX dependency groups. For example to run against python 3.11 on Django 5.2.x:
 
-To run a single test, or group of tests in a class:
+```sh
+just test-all -p 3.11 --group dj52
+```
 
-```shell
+The other test commands will use the current synced virtual environment. To run a single test, or group of tests in a class:
+
+```sh
 just test <path_to_tests_file>::ClassName::FunctionName
 ```
 
 For instance, to run all tests in BasicTests, and then just the test_call_command test you would do:
 
-```shell
+```sh
 just test tests/test_basics.py::BasicTests
 just test tests/test_basics.py::BasicTests::test_call_command
 ```
@@ -97,11 +102,19 @@ just test tests/test_basics.py::BasicTests::test_call_command
 
 To debug a test use the ``debug-test`` recipe:
 
-```shell
+```sh
 just debug-test tests/test_basics.py::BasicTests::test_call_command
 ```
 
 This will set a breakpoint at the start of the test.
+
+To run specific tests or debug tests against specific Python or Django versions you must first sync:
+
+```sh
+just install -p 3.11 --group dj52
+just test -k test_call_command
+just debug-test -k test_call_command
+```
 
 ## Versioning
 
@@ -111,19 +124,19 @@ django-typer strictly adheres to [semantic versioning](https://semver.org).
 
 The release workflow is triggered by tag creation. You must have [git tag signing enabled](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Our justfile has a release shortcut:
 
-```bash
+```sh
 just release x.x.x
 ```
 
 ## Just Recipes
 
-```bash
+```sh
 benchmark                     # generate and document benchmarks
 build                         # build src package and wheel
 build-docs                    # build the docs
 build-docs-html               # build html documentation
 check                         # run all static checks
-check-all                     # run all checks including documentation link checking (slow)
+check-all                     # run all checks except documentation link checking (too slow!)
 check-docs                    # lint the documentation
 check-docs-links              # check the documentation links for broken links
 check-format                  # check if the code needs formatting
@@ -140,7 +153,7 @@ clean-env                     # remove the virtual environment
 clean-git-ignored             # remove all git ignored files
 coverage                      # generate the test coverage report
 coverage-erase                # erase any coverage data
-debug-test *TESTS             # debug an test
+debug-test *TESTS             # debug an test (project venv)
 docs                          # build and open the documentation
 docs-live                     # serve the documentation, with auto-reload
 fetch-refs LIB                # fetch the intersphinx references for the given package
@@ -161,15 +174,14 @@ release VERSION               # issue a relase for the given semver string (e.g.
 run +ARGS                     # run the command in the virtual environment
 setup python="python"         # setup the venv, pre-commit hooks
 sort-imports                  # sort the python imports
-test *TESTS                   # run specific tests
-test-all *ENV                 # run all tests
+test *TESTS                   # run specific tests (project venv)
+test-all *ENV                 # run all tests (isolated venv)
 test-bash                     # test bash shell completions
 test-fish                     # test fish shell completions
-test-lock +PACKAGES           # lock to specific python and versions of given dependencies
-test-no-rich *ENV             # run the tests that require rich not to be installed
+test-no-rich *ENV             # run the tests that require rich not to be installed (isolated venv)
 test-powershell               # test powershell shell completions
 test-pwsh                     # test pwsh shell completions
-test-rich *ENV                # run the tests that require rich to be installed
+test-rich *ENV                # run the tests that require rich to be installed (isolated venv)
 test-zsh                      # test zsh shell completions
 validate_version VERSION      # validate the given version string against the lib version
 zizmor                        # run zizmor security analysis of CI
