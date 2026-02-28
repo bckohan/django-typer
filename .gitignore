@@ -167,3 +167,5 @@ django_typer/tests/dj_params.json
 **/tests/apps/util/*.key
 uv.lock
 zizmor.sarif
+requirements-test*.txt
+constraints.txt

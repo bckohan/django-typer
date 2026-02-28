@@ -55,35 +55,23 @@ _install-docs:
 install-psycopg3:
     uv sync --all-extras --group psycopg3
 
-[script]
-_lock-python:
-    import tomlkit
-    import sys
-    f='pyproject.toml'
-    d=tomlkit.parse(open(f).read())
-    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
-    open(f,'w').write(tomlkit.dumps(d))
-
-# lock to specific python and versions of given dependencies
-test-lock +PACKAGES: _lock-python
-    uv add --no-sync {{ PACKAGES }}
-    uv sync --reinstall --no-default-groups --no-install-project
-
 # run static type checking with mypy
-check-types-mypy *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group typing {{ RUN_ARGS }} mypy
+check-types-mypy *ENV:
+    @just run --no-default-groups --all-extras --group typing {{ ENV }} mypy
 
 # run static type checking with pyright
-check-types-pyright *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group typing {{ RUN_ARGS }} pyright
+check-types-pyright *ENV:
+    @just run --no-default-groups --all-extras --group typing {{ ENV }} pyright
 
 # run all static type checking
-check-types: check-types-mypy check-types-pyright
+check-types *ENV:
+    @just check-types-mypy {{ ENV }}
+    @just check-types-pyright {{ ENV }}
 
 # run all static type checking in an isolated environment
-check-types-isolated:
-    @just check-types-mypy --exact --isolated
-    @just check-types-pyright --exact --isolated
+check-types-isolated *ENV:
+    @just check-types-mypy {{ ENV }} --exact --isolated
+    @just check-types-pyright {{ ENV }} --exact --isolated
 
 # run package checks
 check-package:
@@ -96,11 +84,8 @@ clean-docs:
     shutil.rmtree('./doc/build', ignore_errors=True)
 
 # remove the virtual environment
-[script]
 clean-env:
-    import shutil
-    import sys
-    shutil.rmtree(".venv", ignore_errors=True)
+    python -c "import shutil, pathlib; p=pathlib.Path('.venv'); shutil.rmtree(p, ignore_errors=True) if p.exists() else None"
 
 # remove all git ignored files
 clean-git-ignored:
@@ -165,8 +150,8 @@ check-docs-links: _link_check
         sys.exit(1)
 
 # lint the documentation
-check-docs:
-    @just run --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
+check-docs *ENV:
+    @just run {{ ENV }} --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
 
 # fetch the intersphinx references for the given package
 [script]
@@ -191,41 +176,51 @@ fetch-refs LIB: _install-docs
     raise SystemExit(inspect_main([url]))
 
 # lint the code
-check-lint:
-    @just run --no-default-groups --group lint ruff check --select I
-    @just run --no-default-groups --group lint ruff check
+check-lint *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --select I
+    @just run {{ ENV }} --no-default-groups --group lint ruff check
 
 # check if the code needs formatting
-check-format:
-    @just run --no-default-groups --group lint ruff format --check
-    @just run --no-default-groups --group lint ruff format --line-length 80 --check examples
+check-format *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --check
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --line-length 80 --check examples
 
 # check that the readme renders
-check-readme:
-    @just run --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
+check-readme *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
 
 # sort the python imports
-sort-imports:
-    @just run --no-default-groups --group lint ruff check --fix --select I
+sort-imports *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix --select I
 
 # format the code and sort imports
-format: sort-imports
+format *ENV: sort-imports
     just --fmt --unstable
-    @just run --no-default-groups --group lint ruff format
-    @just run --no-default-groups --group lint ruff format --line-length 80 examples
+    @just run {{ ENV }} --no-default-groups --group lint ruff format
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --line-length 80 examples
 
 # sort the imports and fix linting issues
-lint: sort-imports
-    @just run --no-default-groups --group lint ruff check --fix
+lint *ENV: sort-imports
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix
 
 # fix formatting, linting issues and import sorting
-fix: lint format
+fix *ENV:
+    @just lint {{ ENV }}
+    @just format {{ ENV }}
 
 # run all static checks
-check: check-lint check-format check-types check-package check-docs check-readme
+check *ENV:
+    @just check-lint {{ ENV }}
+    @just check-format {{ ENV }}
+    @just check-types {{ ENV }}
+    @just check-package
+    @just check-docs {{ ENV }}
+    @just check-readme {{ ENV }}
 
 # run all checks except documentation link checking (too slow!)
-check-all: check zizmor
+check-all *ENV:
+    @just check {{ ENV }}
+    @just zizmor
 
 # run zizmor security analysis of CI
 zizmor:
@@ -233,24 +228,15 @@ zizmor:
     zizmor --format sarif .github/workflows/ > zizmor.sarif
 
 _log-tests:
-    uv run pytest --collect-only --disable-warnings -q --no-cov
-
-# run all tests and log them
-[script]
-log-tests:
-    from pathlib import Path
-    import sys
-    Path('./tests/tests.log').unlink(missing_ok=True)
-    open('./tests/tests.log', 'a').close()
-    open('./tests/all_tests.log', 'w').writelines(sys.stdin)
+    uv run pytest --collect-only --disable-warnings -q --no-cov | uv run python -c "from pathlib import Path; import sys; Path('./tests/tests.log').unlink(missing_ok=True); open('./tests/tests.log', 'a').close(); open('./tests/all_tests.log', 'w').writelines(sys.stdin)"
 
 # run the tests and report if any were not run - sanity check
 [script]
-list-missed-tests: install log-tests test-all
+list-missed-tests: install _log-tests test-all
     import sys
     from pathlib import Path
-    test_log = Path(__file__).parent / "tests.log"
-    all_tests = Path(__file__).parent / "all_tests.log"
+    test_log = Path("./tests/tests.log")
+    all_tests = Path("./tests/all_tests.log")
     assert test_log.is_file() and all_tests.is_file()
 
     tests_run = set(test_log.read_text().splitlines())
@@ -264,24 +250,18 @@ list-missed-tests: install log-tests test-all
 # test bash shell completions
 [script("bash")]
 test-bash:
-    uv sync --group test
-    source .venv/bin/activate
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_bash tests/test_parser_completers.py tests/shellcompletion/test_bash.py || exit
     pytest --cov-append tests/shellcompletion/test_bash.py::BashExeTests::test_prompt_install || exit
 
 # test zsh shell completions
 [script("zsh")]
 test-zsh:
-    uv sync --group test
-    source .venv/bin/activate
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_zsh tests/test_parser_completers.py tests/shellcompletion/test_zsh.py || exit
     pytest --cov-append tests/shellcompletion/test_zsh.py::ZshExeTests::test_prompt_install || exit
 
 # test powershell shell completions
 [script("powershell")]
 test-powershell:
-    uv sync --group test
-    . .venv/Scripts/activate.ps1
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_powershell tests/test_parser_completers.py tests/test_parser_completers.py tests/shellcompletion/test_powershell.py::PowerShellTests tests/shellcompletion/test_powershell.py::PowerShellExeTests
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     pytest --cov-append tests/shellcompletion/test_powershell.py::PowerShellExeTests::test_prompt_install
@@ -290,8 +270,6 @@ test-powershell:
 # test pwsh shell completions
 [script("pwsh")]
 test-pwsh:
-    uv sync --group test
-    . .venv/Scripts/activate.ps1
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_pwsh tests/test_parser_completers.py tests/shellcompletion/test_powershell.py::PWSHTests tests/shellcompletion/test_powershell.py::PWSHExeTests
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     pytest --cov-append tests/shellcompletion/test_powershell.py::PWSHExeTests::test_prompt_install
@@ -300,31 +278,29 @@ test-pwsh:
 # test fish shell completions
 [script("fish")]
 test-fish:
-    uv sync --group test
-    source .venv/bin/activate.fish
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_fish tests/test_parser_completers.py tests/shellcompletion/test_fish.py || exit
     pytest --cov-append tests/shellcompletion/test_fish.py::FishExeShellTests::test_prompt_install || exit
 
-# run specific tests
+# run specific tests (project venv)
 test *TESTS:
-    @just run --no-default-groups --exact --all-extras --group test --isolated pytest {{ TESTS }} --cov-append
+    @just run --group test --no-sync pytest {{ TESTS }}
 
-# run the tests that require rich not to be installed
+# run the tests that require rich not to be installed (isolated venv)
 test-no-rich *ENV:
     @just run --no-default-groups --exact --all-extras --group test --group colorama --isolated {{ ENV }} pytest --cov-append -m no_rich
 
-# run the tests that require rich to be installed
+# run the tests that require rich to be installed (isolated venv)
 test-rich *ENV:
     @just run --no-default-groups --exact --all-extras --group test --group colorama --isolated {{ ENV }} pytest --cov-append -m rich
 
-# run all tests
+# run all tests (isolated venv)
 test-all *ENV: coverage-erase
     @just test-rich {{ ENV }}
     @just test-no-rich {{ ENV }}
     uv run --no-default-groups --exact --all-extras --group test --group colorama --isolated {{ ENV }} pytest --cov-append -m "not rich and not no_rich"
     uv run --no-default-groups --exact --all-extras --group test --no-group colorama --isolated {{ ENV }} pytest --cov-append -k test_ctor_params
 
-# debug an test
+# debug a test (project venv)
 debug-test *TESTS:
     @just run pytest \
       -o addopts='-ra -q' \

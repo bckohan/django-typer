@@ -11,6 +11,11 @@ from tests.utils import run_command, rich_installed
 from django_typer.utils import get_current_command
 
 
+def test_env():
+    # a noop test to run the pytest configuration hooks that verify the CI environment
+    pass
+
+
 class BasicTests(TestCase):
     def test_common_options_function(self):
         from django_typer.management import _common_options

@@ -51,6 +51,13 @@ classifiers = [
 
 [tool.uv]
 package = true
+conflicts = [
+  [
+    { group = "dj42" },
+    { group = "dj52" },
+    { group = "dj60" },
+  ],
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/django_typer"]
@@ -215,7 +222,7 @@ test = [
     "maturin>=1.9.4; sys_platform == 'win32'",
     "pluggy>=1.5.0",
     "graphviz>=0.20.3",
-    "pexpect>=4.9.0",
+    "pexpect>=4.9.0"
 ]
 dev = [
     { include-group = "typing" },
@@ -228,4 +235,15 @@ dev = [
     "tomlkit>=0.13.3",
     "ipdb>=0.13.13",
     "ipython>=8.18.1"
+]
+
+# for CI and testing
+dj42 = [
+    "Django~=4.2; python_version < '3.13'",
+]
+dj52 = [
+    "Django~=5.2",
+]
+dj60 = [
+    "Django~=6.0; python_version >= '3.12'",
 ]
