@@ -293,7 +293,6 @@ jobs:
         fail-fast: false
         matrix:
           python-version: ['3.14']
-          postgres-version: ['latest']
           django-version:
             - 'dj52' # April 2028
 
@@ -302,7 +301,7 @@ jobs:
         # Label used to access the service container
         postgres:
           # Docker Hub image
-          image: postgres:${{ matrix.postgres-version }}
+          image: postgres:18.4-trixie@sha256:41da01536bc3ae26308cefb0c57235e7488001360bdb15191eb0b7955b570299
           # Provide the password for postgres
           env:
             POSTGRES_PASSWORD: postgres
