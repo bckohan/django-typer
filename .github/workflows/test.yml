@@ -40,8 +40,6 @@ env:
 jobs:
   test-linux:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -126,8 +124,6 @@ jobs:
 
   test-windows:
     runs-on: windows-latest
-    permissions:
-      actions: write
     defaults:
       run:
         shell: pwsh
@@ -202,8 +198,6 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -276,8 +270,6 @@ jobs:
 
   postgres:
       runs-on: ubuntu-latest
-      permissions:
-        actions: write
       # Service containers to run with `container-job`
       env:
         RDBMS: postgres
@@ -356,8 +348,6 @@ jobs:
 
   linux-bash-complete:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -433,8 +423,6 @@ jobs:
 
   linux-fish-complete:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -513,8 +501,6 @@ jobs:
 
   macos-zsh-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -600,8 +586,6 @@ jobs:
 
   macos-bash-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -677,8 +661,6 @@ jobs:
 
   macos-fish-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -762,8 +744,6 @@ jobs:
 
   windows-powershell-complete:
     runs-on: windows-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -848,8 +828,6 @@ jobs:
 
   windows-pwsh-complete:
     runs-on: windows-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
