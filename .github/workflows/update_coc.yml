@@ -2,6 +2,10 @@ name: Update Code of Conduct
 
 permissions: read-all
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 on:
   workflow_dispatch:
   # Run every Sunday at midnight UTC (00:00) - triggered by webhook?
