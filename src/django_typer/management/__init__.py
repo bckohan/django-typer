@@ -620,14 +620,21 @@ class DTGroup(DjangoTyperMixin, CoreTyperGroup):
 
         # No subcommands provided — run group callback and pass its return as a
         # single-element list (or empty list if it returned None) to the finalizer.
-        if not ctx._protected_args:
+        prot_args = getattr(ctx, "_protected_args", None) or getattr(
+            ctx, "protected_args", None
+        )
+        if not prot_args:
             with ctx:
                 group_rv = click.Command.invoke(self, ctx)
                 return _process_result([group_rv] if group_rv is not None else [])
 
-        args = [*ctx._protected_args, *ctx.args]
+        args = [*prot_args, *ctx.args]
         ctx.args = []
-        ctx._protected_args = []
+        if hasattr(ctx, "_protected_args"):
+            ctx._protected_args = []
+        else:
+            # remove when support for click 8.1.8 dropped
+            ctx.protected_args = []  # type: ignore
 
         with ctx:
             ctx.invoked_subcommand = "*" if args else None

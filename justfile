@@ -226,7 +226,7 @@ check-all *ENV:
 # run zizmor security analysis of CI
 zizmor:
     cargo install --locked zizmor
-    zizmor --format sarif .github/workflows/ > zizmor.sarif
+    zizmor --persona pedantic --format sarif .github/workflows --min-severity low > zizmor.sarif
 
 _log-tests:
     uv run pytest --collect-only --disable-warnings -q --no-cov | uv run python -c "from pathlib import Path; import sys; Path('./tests/tests.log').unlink(missing_ok=True); open('./tests/tests.log', 'a').close(); open('./tests/all_tests.log', 'w').writelines(sys.stdin)"

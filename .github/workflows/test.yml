@@ -3,6 +3,10 @@ name: Test
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     tags-ignore:
@@ -36,8 +40,6 @@ env:
 jobs:
   test-linux:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -46,11 +48,28 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.13'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.11'
+            dependencies: 'lowest-direct'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.13'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
+
+          - django-version: 'dj52'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj60'
@@ -61,6 +80,7 @@ jobs:
       ENV_FILE: py${{ matrix.python-version }}-linux-${{ matrix.django-version }}
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       with:
@@ -90,7 +110,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
@@ -104,8 +124,6 @@ jobs:
 
   test-windows:
     runs-on: windows-latest
-    permissions:
-      actions: write
     defaults:
       run:
         shell: pwsh
@@ -180,8 +198,6 @@ jobs:
 
   test-macos:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -254,8 +270,6 @@ jobs:
 
   postgres:
       runs-on: ubuntu-latest
-      permissions:
-        actions: write
       # Service containers to run with `container-job`
       env:
         RDBMS: postgres
@@ -271,7 +285,6 @@ jobs:
         fail-fast: false
         matrix:
           python-version: ['3.14']
-          postgres-version: ['latest']
           django-version:
             - 'dj52' # April 2028
 
@@ -280,7 +293,7 @@ jobs:
         # Label used to access the service container
         postgres:
           # Docker Hub image
-          image: postgres:${{ matrix.postgres-version }}
+          image: postgres:18.4-trixie@sha256:41da01536bc3ae26308cefb0c57235e7488001360bdb15191eb0b7955b570299
           # Provide the password for postgres
           env:
             POSTGRES_PASSWORD: postgres
@@ -335,8 +348,6 @@ jobs:
 
   linux-bash-complete:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -412,8 +423,6 @@ jobs:
 
   linux-fish-complete:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -492,8 +501,6 @@ jobs:
 
   macos-zsh-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -579,8 +586,6 @@ jobs:
 
   macos-bash-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -656,8 +661,6 @@ jobs:
 
   macos-fish-complete:
     runs-on: macos-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -741,8 +744,6 @@ jobs:
 
   windows-powershell-complete:
     runs-on: windows-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -827,8 +828,6 @@ jobs:
 
   windows-pwsh-complete:
     runs-on: windows-latest
-    permissions:
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -927,7 +926,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # for oidc authentication to codecov
     steps:
       - name: install-emacs-linux
         if: ${{ github.event.inputs.debug == 'true' }}

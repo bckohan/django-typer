@@ -31,16 +31,14 @@ class ModifyOnInitializeTests(TestCase):
             )[0].strip(),
             "('routine3', [])",
         )
-        self.assertEqual(
-            run_command(
-                "mod_on_init",
-                "--settings",
-                "tests.settings.mod_init",
-                "routine3",
-                "--deploy",
-            )[1].strip(),
-            "No such option: --deploy",
-        )
+        result = run_command(
+            "mod_on_init",
+            "--settings",
+            "tests.settings.mod_init",
+            "routine3",
+            "--deploy",
+        )[1].strip()
+        self.assertTrue("No such option" in result and "--deploy" in result)
 
     @override_settings(
         ROUTINES={
