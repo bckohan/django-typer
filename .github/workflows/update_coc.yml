@@ -17,9 +17,8 @@ on:
 jobs:
   update_code_of_conduct:
     permissions:
-     contents: write
-     issues: write
-     pull-requests: write
+     contents: write  # needed for CoC PR
+     pull-requests: write  # needed for CoC PR
 
     runs-on: ubuntu-latest
 

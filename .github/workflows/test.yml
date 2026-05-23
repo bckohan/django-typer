@@ -926,7 +926,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # for oidc authentication to codecov
     steps:
       - name: install-emacs-linux
         if: ${{ github.event.inputs.debug == 'true' }}
