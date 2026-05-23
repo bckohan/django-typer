@@ -46,11 +46,28 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.13'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.11'
+            dependencies: 'lowest-direct'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.13'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
+
+          - django-version: 'dj52'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj60'
@@ -61,6 +78,7 @@ jobs:
       ENV_FILE: py${{ matrix.python-version }}-linux-${{ matrix.django-version }}
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       with:
@@ -90,7 +108,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:

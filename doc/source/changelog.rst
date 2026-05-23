@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+v3.7.3 (2026-05-23)
+===================
+
+* Support `Click 8.4.x <https://github.com/pallets/click/releases/tag/8.4.0>`_
+
 v3.7.2 (2026-04-26)
 ===================
 

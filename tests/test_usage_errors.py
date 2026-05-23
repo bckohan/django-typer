@@ -31,7 +31,7 @@ class UsageErrorTests(TestCase):
     def test_no_option(self):
         result = run_command("error", "--flg1")
         self.assertTrue("Test usage error behavior." in result[0])
-        self.assertTrue("No such option: --flg1" in result[1])
+        self.assertTrue("No such option" in result[1] and "--flg1" in result[1])
 
         with self.assertRaises(CommandError):
             call_command("error", "--flg1")
