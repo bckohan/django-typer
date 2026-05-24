@@ -8,6 +8,8 @@ v3.7.3 (2026-05-23)
 ===================
 
 * Support `Click 8.4.x <https://github.com/pallets/click/releases/tag/8.4.0>`_
+* Fixed `Completions longer than the terminal width are chopped with \n by rich console formatter
+  <https://github.com/django-commons/django-typer/issues/292>`_
 
 v3.7.2 (2026-04-26)
 ===================

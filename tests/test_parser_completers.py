@@ -1915,6 +1915,7 @@ class TestShellCompletersAndParsers(ParserCompleterMixin, TestCase):
         local_paths = [Path(pth).as_posix() for pth in os.listdir()]
         result = self.shellcompletion.complete("completion --path ")
         for pth in local_paths:
+            # some very long paths in CI are chopped making this fail spuriously
             self.assertIn(f"{pth}", result)
 
         for incomplete, sep in [(".", os.path.sep), ("./", "/")]:
