@@ -268,7 +268,7 @@ decorator. This is like defining a group at the command root and is an extension
 Collect Results with @finalize
 ------------------------------
 
-Typer_ and :doc:`Click <click:index>` have a ``results_callback`` mechanism on ``MultiCommands``
+Typer_ and :doc:`Click <click:commands>` have a ``results_callback`` mechanism on ``MultiCommands``
 that allow a function hook to be registered to operate on the results of subroutines before the
 command exits. You may use this same ``results_callback`` mechanism directly through the Typer_
 interface, but django-typer_ offers a more convenient class-aware way to do this with the
@@ -831,7 +831,7 @@ or :func:`~django_typer.management.get_command` which allows you to easily grab 
 commands for testing. Using the command's configured stdout and stderr output wrappers also means
 output will respect the :option:`--force-color` and :option:`--no-color` parameters.
 
-Typer_ and :doc:`click <click:index>` provide `echo and secho
+Typer_ and :doc:`click <click:utils>` provide `echo and secho
 <https://typer.tiangolo.com/tutorial/printing/>`_ functions that automatically handle byte to string
 conversions and offer simple styling support. :class:`~django_typer.management.TyperCommand`
 provides :meth:`~django_typer.management.TyperCommand.echo` and

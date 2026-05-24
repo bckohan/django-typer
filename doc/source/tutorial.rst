@@ -25,9 +25,9 @@ Upstream Libraries
         :align: right
 
 django-typer_ merges the Django_ :class:`~django.core.management.BaseCommand` interface with the
-Typer_ interface and Typer_ itself is built on top of :doc:`click <click:index>`. This means when
-using django-typer_ you will encounter interfaces and concepts from *all three* of these upstream
-libraries:
+Typer_ interface and Typer_ itself is built on top of :doc:`click <click:quickstart>`. This means
+when using django-typer_ you will encounter interfaces and concepts from *all three* of these
+upstream libraries:
 
 * :class:`~django.core.management.BaseCommand`
 
@@ -43,14 +43,14 @@ libraries:
     Typer_ interface to define Arguments_ and Options_ so please refer to the Typer_ documentation
     for any questions about how to define these.
 
-* :doc:`click <click:index>`
+* :doc:`click <click:quickstart>`
 
-    The :doc:`click <click:index>` interfaces and concepts are relatively hidden by Typer_, but
-    occasionally you may need to refer to the :doc:`click <click:index>` documentation when you want
-    to implement more complex behaviors like passing :class:`context parameters <click.Context>`.
-    It is not necessary to familiarize yourself with :doc:`click <click:index>` to use
-    django-typer_, but you should know that it exists and is the engine behind much of this
-    functionality.
+    The :doc:`click <click:quickstart>` interfaces and concepts are relatively hidden by Typer_, but
+    occasionally you may need to refer to the :doc:`click <click:quickstart>` documentation when you
+    want to implement more complex behaviors like passing
+    :class:`context parameters <click.Context>`. It is not necessary to familiarize yourself with
+    :doc:`click <click:quickstart>` to use django-typer_, but you should know that it exists and is
+    the engine behind much of this functionality.
 
 
 Install django-typer_
