@@ -86,11 +86,6 @@ class _CompleteTestCase(with_typehint(TestCase)):
 
     tabs: str
 
-    # Reset / clear-line key sequence sent between get_completions calls when
-    # reusing a long-running shell.  Ctrl+C works for pwsh / powershell / bash /
-    # zsh / fish (cancels the current edit line and re-prompts).
-    _reset_keys: str = "\x03"
-
     # Per-instance shell process state (None when no shell is running).
     _shell_state: t.Any = None
     _sentinel_counter: int = 0
@@ -182,9 +177,6 @@ class _CompleteTestCase(with_typehint(TestCase)):
             kwargs["fallback"] = fallback
         self.command.init(**init_kwargs)
         self.command.install(**kwargs)
-        # Profile / completer registration changed -- any running shell is
-        # stale.  Force the next get_completions to spawn fresh.
-        self._invalidate_shell()
         self.verify_install(script=script)
 
     def remove(self, script=None):
@@ -196,20 +188,19 @@ class _CompleteTestCase(with_typehint(TestCase)):
         if self.shell:
             self.command.init(shell=self.shell)
         self.command.uninstall(**kwargs)
-        self._invalidate_shell()
         self.get_completions("ping")  # just to reinit shell
         self.verify_remove(script=script)
 
     # ------------------------------------------------------------------ #
     # PTY plumbing
     #
-    # The shell is spawned lazily on the first get_completions() call of a
-    # test and reused for subsequent calls in the same test.  install() /
-    # remove() / tearDown() invalidate it so the next call re-spawns with
-    # the updated user profile.  Fixed time.sleep() calls are replaced with
-    # sentinel-based waits (after each silent command we echo a unique
-    # marker and read until it appears, then drain to quiescence) and pure
-    # quiescence waits after TAB (where no sentinel is possible).
+    # Each get_completions() spawns a fresh shell, sources the environment,
+    # types the command + TAB, captures output, and tears the shell down.
+    # The previous implementation also spawned per-call but relied on fixed
+    # time.sleep() calls (3s for the first prompt + 2s after env + 2s after
+    # TAB).  Here those are replaced with sentinel-based waits (after each
+    # silent command we echo a unique marker and read until it appears) and
+    # pure quiescence waits after TAB (where no sentinel is possible).
     # ------------------------------------------------------------------ #
 
     if platform.system() == "Windows":
@@ -300,26 +291,24 @@ class _CompleteTestCase(with_typehint(TestCase)):
                 _wait_for(self._read_shell, sentinel=sentinel, timeout=10.0)
 
     def get_completions(self, *cmds: str, scrub_output=True, position=0) -> str:
+        # Ensure a clean shell for every call; previous test interactions
+        # (typed but un-Entered text, completion menus, prediction overlays)
+        # could otherwise contaminate the captured output.
+        self._invalidate_shell()
         self._ensure_shell()
+        try:
+            self._write_shell(" ".join(cmds))
+            if position > 0:
+                self._write_shell("\x1b[C" * position)
+            elif position < 0:
+                self._write_shell("\x1b[D" * abs(position))
+            self._write_shell(self.tabs)
 
-        # Drain anything left over from the previous call (e.g. a redrawn
-        # prompt after our reset keys) before we start typing.
-        _wait_for(self._read_shell, quiet_period=0.1, timeout=1.0)
-
-        self._write_shell(" ".join(cmds))
-        if position > 0:
-            self._write_shell("\x1b[C" * position)
-        elif position < 0:
-            self._write_shell("\x1b[D" * abs(position))
-        self._write_shell(self.tabs)
-
-        # TAB triggers an inline completion display -- no sentinel is
-        # possible, so wait for the output to settle.
-        output = _wait_for(self._read_shell, quiet_period=0.4, timeout=5.0)
-
-        # Reset the edit line so the next call starts from a clean prompt.
-        self._write_shell(self._reset_keys)
-        _wait_for(self._read_shell, quiet_period=0.15, timeout=2.0)
+            # TAB triggers an inline completion display -- no sentinel is
+            # possible, so wait for the output to settle.
+            output = _wait_for(self._read_shell, quiet_period=0.4, timeout=5.0)
+        finally:
+            self._invalidate_shell()
 
         return scrub(output) if scrub_output else output
 
