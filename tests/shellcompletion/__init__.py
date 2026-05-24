@@ -305,8 +305,13 @@ class _CompleteTestCase(with_typehint(TestCase)):
             self._write_shell(self.tabs)
 
             # TAB triggers an inline completion display -- no sentinel is
-            # possible, so wait for the output to settle.
-            output = _wait_for(self._read_shell, quiet_period=0.4, timeout=5.0)
+            # possible, so wait for the output to settle.  The quiet_period
+            # must be long enough to bridge the Django-bootstrap gap between
+            # the shell echoing our typed text and the completion subprocess
+            # actually producing output (the registered completer shells out
+            # to `django-admin shellcompletion complete`, which loads Django
+            # -- typically 1-2s on a cold interpreter).
+            output = _wait_for(self._read_shell, quiet_period=2.0, timeout=15.0)
         finally:
             self._invalidate_shell()
 
