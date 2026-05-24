@@ -3,7 +3,7 @@ Typer_ supports custom parsers for options and arguments. If you would
 like to type a parameter with a type that isn't supported by Typer_ you can
 `implement your own parser
 <https://typer.tiangolo.com/tutorial/parameter-types/custom-types>`_, or
-:class:`click.ParamType` in :doc:`click <click:index>` parlance.
+:class:`click.ParamType` in :doc:`click <click:parameter-types>` parlance.
 
 This package contains a collection of parsers that turn strings into useful
 Django types. Pass these parsers to the `parser` argument of ``typer.Option`` and

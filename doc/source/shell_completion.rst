@@ -26,9 +26,9 @@ or the potential values of either.
 Django has some support for bash completions, but it is not enabled by default and
 left to the user to install.
 
-django-typer_ augments the upstream functionality of Typer_ and :doc:`Click <click:index>` to
-provide both an easy way to define shell completions for your custom CLI options and arguments as
-well as a way to install them in your shell.
+django-typer_ augments the upstream functionality of Typer_ and
+:doc:`Click <click:shell-completion>` to provide both an easy way to define shell completions for
+your custom CLI options and arguments as well as a way to install them in your shell.
 
 .. tip::
 

@@ -318,7 +318,7 @@ class Context(TyperContext):
     An extension of the
     :class:`click.Context` class that adds a reference to the
     :class:`~django_typer.management.TyperCommand` instance so that the Django_ command
-    can be accessed from within :doc:`click <click:index>` and Typer_ callbacks that take a context. This
+    can be accessed from within :doc:`click <click:click-concepts>` and Typer_ callbacks that take a context. This
     context also keeps track of parameters that were supplied to
     :func:`~django.core.management.call_command`.
     """
