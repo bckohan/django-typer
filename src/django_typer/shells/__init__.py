@@ -115,6 +115,7 @@ class DjangoTyperShellCompleter(ShellComplete):
                 color_system="auto" if self.color else None,
                 force_terminal=True,
                 file=self.console_buffer,
+                width=10**6,
             )
         except ImportError:
             pass
