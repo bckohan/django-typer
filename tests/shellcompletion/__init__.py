@@ -30,30 +30,6 @@ except Exception:
     pass
 
 
-def read_all_from_fd_with_timeout(fd, timeout=3):
-    all_data = bytearray()
-    start_time = time.time()
-
-    while True:
-        # Calculate remaining time
-        remaining_time = timeout - (time.time() - start_time)
-        if remaining_time <= 0:
-            break  # Timeout reached
-
-        # Wait until the file descriptor is ready or the timeout is reached
-        rlist, _, _ = select.select([fd], [], [], remaining_time)
-        if not rlist:
-            break  # Timeout reached
-
-        # Read available data
-        data = os.read(fd, 1024)
-        if not data:
-            break  # End of file reached
-        all_data.extend(data)
-
-    return bytes(all_data).decode()
-
-
 def scrub(output: str) -> str:
     """Scrub control code characters and ansi escape sequences for terminal colors from output"""
     return (
@@ -61,6 +37,42 @@ def scrub(output: str) -> str:
         .replace("\t", "")
         .replace("\x08", "")
     )
+
+
+_SENTINEL_PREFIX = "__DJT_SENTINEL_"
+
+
+def _wait_for(
+    read_fn: t.Callable[[], str],
+    sentinel: t.Optional[str] = None,
+    quiet_period: float = 0.25,
+    timeout: float = 15.0,
+) -> str:
+    """
+    Poll ``read_fn`` until either:
+      * ``sentinel`` (if provided) has appeared and no new bytes arrived
+        for ``quiet_period`` seconds, OR
+      * no sentinel was given and no new bytes arrived for ``quiet_period``
+        seconds (pure quiescence wait).
+
+    Always bounded by ``timeout``. Returns the full buffer.
+    """
+    buf = ""
+    start = time.time()
+    last_data = time.time()
+    seen = sentinel is None
+    while time.time() - start < timeout:
+        data = read_fn()
+        if data:
+            buf += data
+            last_data = time.time()
+            if sentinel is not None and not seen and sentinel in buf:
+                seen = True
+        elif seen and (time.time() - last_data) >= quiet_period:
+            return buf
+        else:
+            time.sleep(0.02)
+    return buf
 
 
 class _CompleteTestCase(with_typehint(TestCase)):
@@ -74,6 +86,15 @@ class _CompleteTestCase(with_typehint(TestCase)):
 
     tabs: str
 
+    # Reset / clear-line key sequence sent between get_completions calls when
+    # reusing a long-running shell.  Ctrl+C works for pwsh / powershell / bash /
+    # zsh / fish (cancels the current edit line and re-prompts).
+    _reset_keys: str = "\x03"
+
+    # Per-instance shell process state (None when no shell is running).
+    _shell_state: t.Any = None
+    _sentinel_counter: int = 0
+
     @cached_property
     def command(self) -> ShellCompletion:
         cmd = get_command("shellcompletion", ShellCompletion)
@@ -86,12 +107,53 @@ class _CompleteTestCase(with_typehint(TestCase)):
         )
 
     def setUp(self):
+        self._shell_state = None
+        self._sentinel_counter = 0
         self.remove()
         super().setUp()
 
     def tearDown(self):
         self.remove()
+        self._invalidate_shell()
         super().tearDown()
+
+    def _next_sentinel(self) -> str:
+        self._sentinel_counter += 1
+        return f"{_SENTINEL_PREFIX}{self._sentinel_counter}__"
+
+    def _invalidate_shell(self) -> None:
+        """Tear down the long-running shell, if any.
+
+        Called whenever shell state (profile, registered completers) may
+        have changed and a fresh shell process is required.
+        """
+        state = self._shell_state
+        self._shell_state = None
+        if state is None:
+            return
+        if platform.system() == "Windows":
+            try:
+                state.close()
+            except Exception:
+                pass
+        else:
+            master_fd, slave_fd, process = state
+            # Close the fds first so the shell sees EOF on stdin and exits
+            # cleanly.  This avoids relying on SIGTERM, which some shells
+            # (notably interactive zsh) ignore.
+            for fd in (master_fd, slave_fd):
+                try:
+                    os.close(fd)
+                except Exception:
+                    pass
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                try:
+                    process.wait(timeout=2)
+                except Exception:
+                    pass
 
     def verify_install(self, script=None, directory: t.Optional[Path] = None):
         pass
@@ -120,6 +182,9 @@ class _CompleteTestCase(with_typehint(TestCase)):
             kwargs["fallback"] = fallback
         self.command.init(**init_kwargs)
         self.command.install(**kwargs)
+        # Profile / completer registration changed -- any running shell is
+        # stale.  Force the next get_completions to spawn fresh.
+        self._invalidate_shell()
         self.verify_install(script=script)
 
     def remove(self, script=None):
@@ -131,73 +196,89 @@ class _CompleteTestCase(with_typehint(TestCase)):
         if self.shell:
             self.command.init(shell=self.shell)
         self.command.uninstall(**kwargs)
+        self._invalidate_shell()
         self.get_completions("ping")  # just to reinit shell
         self.verify_remove(script=script)
 
+    # ------------------------------------------------------------------ #
+    # PTY plumbing
+    #
+    # The shell is spawned lazily on the first get_completions() call of a
+    # test and reused for subsequent calls in the same test.  install() /
+    # remove() / tearDown() invalidate it so the next call re-spawns with
+    # the updated user profile.  Fixed time.sleep() calls are replaced with
+    # sentinel-based waits (after each silent command we echo a unique
+    # marker and read until it appears, then drain to quiescence) and pure
+    # quiescence waits after TAB (where no sentinel is possible).
+    # ------------------------------------------------------------------ #
+
     if platform.system() == "Windows":
 
-        def get_completions(self, *cmds: str, scrub_output=True, position=0) -> str:
+        def _read_shell(self) -> str:
+            return self._shell_state.read() if self._shell_state is not None else ""
+
+        def _write_shell(self, data: str) -> None:
+            assert self._shell_state is not None
+            self._shell_state.write(data)
+
+        def _ensure_shell(self) -> None:
+            if self._shell_state is not None:
+                return
             import winpty
 
             assert self.shell
 
-            pty = winpty.PTY(256, 512)
-
-            def read_all() -> str:
-                output = ""
-                while data := pty.read():
-                    output += data
-                    time.sleep(0.1)
-                return output
-
-            # Start the subprocess
-            pty.spawn(
+            self._shell_state = winpty.PTY(256, 512)
+            self._shell_state.spawn(
                 self.shell, *([self.interactive_opt] if self.interactive_opt else [])
             )
 
-            # Wait for the shell to start and get to the prompt
-            time.sleep(3)
-            read_all()
+            # Wait for first prompt by echoing a sentinel; the shell will
+            # process it once the prompt is ready.
+            sentinel = self._next_sentinel()
+            self._write_shell(f"echo {sentinel}{os.linesep}")
+            _wait_for(self._read_shell, sentinel=sentinel, timeout=20.0)
 
             for line in self.environment:
-                pty.write(f"{line}{os.linesep}")
-
-            time.sleep(2)
-            output = read_all() + read_all()
-
-            pty.write(" ".join(cmds))
-            pty.write(position * ("\x1b[C" if position > 0 else "\x1b[D"))
-            time.sleep(0.1)
-            pty.write(self.tabs)
-
-            time.sleep(2)
-            completion = read_all() + read_all()
-
-            return scrub(completion) if scrub_output else completion
+                self._write_shell(f"{line}{os.linesep}")
+                sentinel = self._next_sentinel()
+                self._write_shell(f"echo {sentinel}{os.linesep}")
+                _wait_for(self._read_shell, sentinel=sentinel, timeout=15.0)
 
     else:
 
-        def get_completions(self, *cmds: str, scrub_output=True, position=0) -> str:
+        def _read_shell(self) -> str:
+            if self._shell_state is None:
+                return ""
+            master_fd = self._shell_state[0]
+            rlist, _, _ = select.select([master_fd], [], [], 0)
+            if not rlist:
+                return ""
+            try:
+                data = os.read(master_fd, 1024 * 1024)
+            except (BlockingIOError, OSError):
+                return ""
+            if not data:
+                return ""
+            return data.decode(errors="replace")
+
+        def _write_shell(self, data: str) -> None:
+            assert self._shell_state is not None
+            os.write(self._shell_state[0], data.encode())
+
+        def _ensure_shell(self) -> None:
+            if self._shell_state is not None:
+                return
             import fcntl
             import termios
             import pty
 
-            def read(fd):
-                """Function to read from a file descriptor."""
-                return os.read(fd, 1024 * 1024).decode()
-
-            # Create a pseudo-terminal
             master_fd, slave_fd = pty.openpty()
-
-            # Define window size - width and height
             os.set_blocking(slave_fd, False)
-            win_size = struct.pack("HHHH", 24, 80, 0, 0)  # 24 rows, 80 columns
+            os.set_blocking(master_fd, False)
+            win_size = struct.pack("HHHH", 24, 80, 0, 0)
             fcntl.ioctl(slave_fd, termios.TIOCSWINSZ, win_size)
 
-            # env = os.environ.copy()
-            # env["TERM"] = "xterm-256color"
-
-            # Spawn a new shell process
             shell = self.shell or detect_shell()[0]
             process = subprocess.Popen(
                 [shell, *([self.interactive_opt] if self.interactive_opt else [])],
@@ -205,45 +286,42 @@ class _CompleteTestCase(with_typehint(TestCase)):
                 stdout=slave_fd,
                 stderr=slave_fd,
                 text=True,
-                # env=env,
-                # preexec_fn=os.setsid,
             )
-            # Wait for the shell to start and get to the prompt
-            print(read(master_fd))
+            self._shell_state = (master_fd, slave_fd, process)
+
+            sentinel = self._next_sentinel()
+            self._write_shell(f"echo {sentinel}{os.linesep}")
+            _wait_for(self._read_shell, sentinel=sentinel, timeout=15.0)
 
             for line in self.environment:
-                os.write(master_fd, f"{line}{os.linesep}".encode())
+                self._write_shell(f"{line}{os.linesep}")
+                sentinel = self._next_sentinel()
+                self._write_shell(f"echo {sentinel}{os.linesep}")
+                _wait_for(self._read_shell, sentinel=sentinel, timeout=10.0)
 
-            print(read(master_fd))
-            # Send a command with a tab character for completion
+    def get_completions(self, *cmds: str, scrub_output=True, position=0) -> str:
+        self._ensure_shell()
 
-            cmd = " ".join(cmds)
-            os.write(master_fd, cmd.encode())
+        # Drain anything left over from the previous call (e.g. a redrawn
+        # prompt after our reset keys) before we start typing.
+        _wait_for(self._read_shell, quiet_period=0.1, timeout=1.0)
 
-            # positioning does not seem to work :(
-            if position < 0:
-                os.write(master_fd, f"\033[{abs(position)}D".encode())
-            elif position > 0:
-                os.write(master_fd, f"\033[{abs(position)}C".encode())
-            time.sleep(0.5)
+        self._write_shell(" ".join(cmds))
+        if position > 0:
+            self._write_shell("\x1b[C" * position)
+        elif position < 0:
+            self._write_shell("\x1b[D" * abs(position))
+        self._write_shell(self.tabs)
 
-            print(f'"{cmd}"')
-            os.write(master_fd, self.tabs.encode())
+        # TAB triggers an inline completion display -- no sentinel is
+        # possible, so wait for the output to settle.
+        output = _wait_for(self._read_shell, quiet_period=0.4, timeout=5.0)
 
-            time.sleep(0.5)
+        # Reset the edit line so the next call starts from a clean prompt.
+        self._write_shell(self._reset_keys)
+        _wait_for(self._read_shell, quiet_period=0.15, timeout=2.0)
 
-            # Read the output
-            output = read_all_from_fd_with_timeout(master_fd)
-
-            # Clean up
-            os.close(slave_fd)
-            os.close(master_fd)
-            process.terminate()
-            process.wait()
-            # remove bell character which can show up in some terminals where we hit tab
-            if scrub_output:
-                return scrub(output)
-            return output
+        return scrub(output) if scrub_output else output
 
     def run_app_completion(self):
         completions = self.get_completions(self.launch_script, "completion", " ")
