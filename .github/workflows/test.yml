@@ -135,11 +135,21 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj52'
@@ -156,6 +166,7 @@ jobs:
       ENV_FILE: py${{ matrix.python-version }}-windows-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
       WINPTY_ROOT: ${{ github.workspace }}\winpty-msvc
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -183,7 +194,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-all -p $env:TEST_PYTHON --group $env:TEST_DJANGO_VERSION
+        just test-all -p $env:TEST_PYTHON --group $env:TEST_DJANGO_VERSION --resolution $env:DEPENDENCY_RESOLUTION
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -206,11 +217,21 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj52'
@@ -227,6 +248,7 @@ jobs:
       ENV_FILE: py${{ matrix.python-version }}-macos-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -256,7 +278,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
@@ -356,11 +378,21 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj52'
@@ -376,6 +408,7 @@ jobs:
       ENV_FILE: linux-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -404,7 +437,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate
         just test-bash || exit 1
         sudo apt-get remove --purge -y powershell
@@ -431,11 +464,21 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
           - python-version: '3.14'
             django-version: 'dj42'
+
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
           - python-version: '3.10'
             django-version: 'dj52'
@@ -451,6 +494,7 @@ jobs:
       ENV_FILE: linux-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -483,7 +527,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate.fish
         just test-fish
       shell: fish {0}
@@ -509,6 +553,9 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
@@ -525,11 +572,19 @@ jobs:
           - python-version: '3.12'
             django-version: 'dj60'
 
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
+
     env:
       COVERAGE_FILE: macos-zsh-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: macos-zsh-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -569,7 +624,7 @@ jobs:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       shell: zsh {0}
       run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate
         just test-zsh || exit 1
 
@@ -594,6 +649,9 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
@@ -609,12 +667,20 @@ jobs:
             django-version: 'dj60'
           - python-version: '3.12'
             django-version: 'dj60'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
     env:
       COVERAGE_FILE: macos-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: macos-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -644,7 +710,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate
         just test-bash || exit 1
 
@@ -669,6 +735,9 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
@@ -684,12 +753,20 @@ jobs:
             django-version: 'dj60'
           - python-version: '3.12'
             django-version: 'dj60'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
     env:
       COVERAGE_FILE: macos-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: macos-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -727,7 +804,7 @@ jobs:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       shell: fish {0}
       run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate.fish
         just test-fish || exit 1
 
@@ -752,6 +829,9 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
@@ -767,12 +847,20 @@ jobs:
             django-version: 'dj60'
           - python-version: '3.12'
             django-version: 'dj60'
+          
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
 
     env:
       COVERAGE_FILE: windows-powershell-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: windows-powershell-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -803,7 +891,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION"
+        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
         . .venv\Scripts\activate.ps1
         cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_powershell"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -836,6 +924,9 @@ jobs:
           - 'dj42' # LTS April 2026
           - 'dj52' # April 2028
           - 'dj60' # April 2027
+        dependencies:
+          - 'lowest-direct'
+          - 'highest'
         exclude:
           - python-version: '3.12'
             django-version: 'dj42'
@@ -852,11 +943,19 @@ jobs:
           - python-version: '3.12'
             django-version: 'dj60'
 
+          - python-version: '3.10'
+            dependencies: 'highest'
+          - python-version: '3.12'
+            dependencies: 'lowest-direct'
+          - python-version: '3.14'
+            dependencies: 'lowest-direct'
+
     env:
       COVERAGE_FILE: windows-pwsh-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: windows-pwsh-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -887,7 +986,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION"
+        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
         . .venv\Scripts\activate.ps1
         cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_pwsh"
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
