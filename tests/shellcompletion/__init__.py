@@ -39,6 +39,24 @@ def scrub(output: str) -> str:
     )
 
 
+def render(output: str, cols: int = 80, rows: int = 200) -> str:
+    """Render terminal control sequences via pyte to recover visible screen text.
+
+    Why: bash's readline redisplay emits cursor-positioning codes interleaved
+    with literal characters and pad-spaces. Stripping CSI sequences leaves the
+    chars at the *wrong* positions (e.g. ``complet                  ion``),
+    so substring assertions against the resulting string fail even though the
+    user would see ``completion`` on their terminal. pyte replays the codes
+    against a virtual screen and gives us back what's actually visible.
+    """
+    import pyte
+
+    screen = pyte.Screen(cols, rows)
+    stream = pyte.Stream(screen)
+    stream.feed(output)
+    return "\n".join(line.rstrip() for line in screen.display).rstrip()
+
+
 _SENTINEL_PREFIX = "__DJT_SENTINEL_"
 
 
@@ -315,7 +333,7 @@ class _CompleteTestCase(with_typehint(TestCase)):
         finally:
             self._invalidate_shell()
 
-        return scrub(output) if scrub_output else output
+        return render(output) if scrub_output else output
 
     def run_app_completion(self):
         completions = self.get_completions(self.launch_script, "completion", " ")

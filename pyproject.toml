@@ -246,7 +246,8 @@ test = [
     "maturin>=1.9.4; sys_platform == 'win32'",
     "pluggy>=1.5.0",
     "graphviz>=0.20.3",
-    "pexpect>=4.9.0"
+    "pexpect>=4.9.0",
+    "pyte>=0.8.2"
 ]
 dev = [
     { include-group = "typing" },
