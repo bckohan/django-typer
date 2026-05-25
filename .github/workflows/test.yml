@@ -32,6 +32,8 @@ on:
     # Every Sunday at 9:00 AM Los Angeles time.
     # GitHub cron is UTC; 09:00 PT == 17:00 UTC (PST).
     - cron: "0 17 * * 0"
+    # Runs at the start of every hour, UTC - check for race conditions/hangs
+    - cron: "0 * * * *"
 
 env:
   ENABLE_CI_ONLY_TESTS: "1"
