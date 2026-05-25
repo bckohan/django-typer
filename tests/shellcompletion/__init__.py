@@ -39,7 +39,7 @@ def scrub(output: str) -> str:
     )
 
 
-def render(output: str, cols: int = 80, rows: int = 200) -> str:
+def render(output: str, cols: int = 500, rows: int = 200) -> str:
     """Render terminal control sequences via pyte to recover visible screen text.
 
     Why: bash's readline redisplay emits cursor-positioning codes interleaved
@@ -48,6 +48,13 @@ def render(output: str, cols: int = 80, rows: int = 200) -> str:
     so substring assertions against the resulting string fail even though the
     user would see ``completion`` on their terminal. pyte replays the codes
     against a virtual screen and gives us back what's actually visible.
+
+    The virtual screen is intentionally far wider than the PTY (which is 80
+    cols). Shells often wrap long input/output implicitly when the cursor
+    runs past the PTY's last column -- the byte stream contains no newline,
+    so a virtual screen matching the PTY would split the text. A wider
+    screen lets pyte keep the text on one row, matching the contiguous
+    substring we want to assert against (e.g. a long filesystem path).
     """
     import pyte
 
