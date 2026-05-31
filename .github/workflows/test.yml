@@ -530,7 +530,7 @@ jobs:
         uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate.fish
         just test-fish
-      shell: fish {0}
+      shell: fish {0}  # zizmor: ignore[misfeature]
 
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -611,7 +611,7 @@ jobs:
       run: |
         brew install just
     - name: Install Homebrew and Zshell Completion
-      shell: zsh {0}
+      shell: zsh {0}  # zizmor: ignore[misfeature]
       run: |
         brew install zsh-completions
         chmod go-w /opt/homebrew/share
@@ -622,7 +622,7 @@ jobs:
     - name: Run Unit Tests
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      shell: zsh {0}
+      shell: zsh {0}  # zizmor: ignore[misfeature]
       run: |
         uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate
@@ -802,7 +802,7 @@ jobs:
     - name: Run Tab Completion Tests
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      shell: fish {0}
+      shell: fish {0}  # zizmor: ignore[misfeature]
       run: |
         uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
         source .venv/bin/activate.fish
