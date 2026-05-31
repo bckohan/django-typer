@@ -196,6 +196,10 @@ format *ENV: sort-imports
     @just run {{ ENV }} --no-default-groups --group lint ruff format
     @just run {{ ENV }} --no-default-groups --group lint ruff format --line-length 80 examples
 
+# format the github workflow files
+format-workflows:
+    npx prettier --write ".github/workflows/*.{yml,yaml}"
+
 # sort the imports and fix linting issues
 lint *ENV: sort-imports
     @just run {{ ENV }} --no-default-groups --group lint ruff check --fix
@@ -226,7 +230,7 @@ check-all *ENV:
 # run zizmor security analysis of CI
 zizmor:
     cargo install --locked zizmor
-    zizmor --persona pedantic --format sarif .github/workflows --min-severity low > zizmor.sarif
+    zizmor --persona auditor --format sarif .github/workflows > zizmor.sarif
 
 _log-tests:
     uv run pytest --collect-only --disable-warnings -q --no-cov | uv run python -c "from pathlib import Path; import sys; Path('./tests/tests.log').unlink(missing_ok=True); open('./tests/tests.log', 'a').close(); open('./tests/all_tests.log', 'w').writelines(sys.stdin)"
