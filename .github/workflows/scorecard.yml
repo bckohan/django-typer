@@ -6,7 +6,7 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -22,10 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: scorecard
-      deployment: false  # Prevents creating a GitHub deployment object
+      deployment: false # Prevents creating a GitHub deployment object
     permissions:
-      security-events: write  # allow uploading code scanning results
-      id-token: write  # to allow OIDC authentication for publishing results to OpenSSF REST API
+      security-events: write # allow uploading code scanning results
+      id-token: write # to allow OIDC authentication for publishing results to OpenSSF REST API
 
     steps:
       - name: "Checkout code"

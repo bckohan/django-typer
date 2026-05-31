@@ -22,7 +22,7 @@ jobs:
   test:
     permissions:
       contents: read
-      id-token: write  # to allow codecov oidc upload
+      id-token: write # to allow codecov oidc upload
     uses: ./.github/workflows/test.yml
 
   build:

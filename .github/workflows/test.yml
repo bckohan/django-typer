@@ -10,10 +10,10 @@ concurrency:
 on:
   push:
     tags-ignore:
-      - '*'
-    branches: ['main']
+      - "*"
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
     paths:
       - "src/**"
       - "tests/**"
@@ -24,14 +24,14 @@ on:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Open ssh debug session.'
+        description: "Open ssh debug session."
         required: true
         default: false
         type: boolean
   schedule:
     # Every Sunday at 9:00 AM Los Angeles time.
     # GitHub cron is UTC; 09:00 PT == 17:00 UTC (PST).
-    - cron: '0 17 * * 0'
+    - cron: "0 17 * * 0"
 
 env:
   ENABLE_CI_ONLY_TESTS: "1"
@@ -43,38 +43,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.13'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
-          
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.11'
-            dependencies: 'lowest-direct'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.13'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.13"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - django-version: 'dj52'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.11"
+            dependencies: "lowest-direct"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.13"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.11'
-            django-version: 'dj60'
+          - django-version: "dj52"
+            dependencies: "lowest-direct"
+
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.11"
+            django-version: "dj60"
     env:
       COVERAGE_FILE: py${{ matrix.python-version }}-linux-${{ matrix.django-version }}.coverage
       ENV_FILE: py${{ matrix.python-version }}-linux-${{ matrix.django-version }}
@@ -82,45 +82,45 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-linux
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        sudo apt install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      timeout-minutes: 60
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Run Unit Tests
-      shell: bash
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-linux
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+        timeout-minutes: 60
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Run Unit Tests
+        shell: bash
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   test-windows:
     runs-on: windows-latest
@@ -130,36 +130,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     env:
       COVERAGE_FILE: py${{ matrix.python-version }}-windows-${{ matrix.django-version }}.coverage
@@ -169,79 +169,79 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
       WINPTY_ROOT: ${{ github.workspace }}\winpty-msvc
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: install-vim-windows
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Run Unit Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        just test-all -p $env:TEST_PYTHON --group $env:TEST_DJANGO_VERSION --resolution $env:DEPENDENCY_RESOLUTION
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: install-vim-windows
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          just test-all -p $env:TEST_PYTHON --group $env:TEST_DJANGO_VERSION --resolution $env:DEPENDENCY_RESOLUTION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   test-macos:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
-          
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
+
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     env:
       COVERAGE_FILE: py${{ matrix.python-version }}-macos-${{ matrix.django-version }}.coverage
@@ -251,158 +251,158 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-macos
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        brew install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      run: |
-        brew install just
-    - name: Run Unit Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          brew install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        run: |
+          brew install just
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   postgres:
-      runs-on: ubuntu-latest
-      # Service containers to run with `container-job`
-      env:
-        RDBMS: postgres
-        POSTGRES_PASSWORD: postgres
-        POSTGRES_USER: postgres
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        COVERAGE_FILE: postgres-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
-        ENV_FILE: postgres-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
-        TEST_PYTHON_VERSION: ${{ matrix.python-version }}
-        TEST_DJANGO_VERSION: ${{ matrix.django-version }}
-      strategy:
-        fail-fast: false
-        matrix:
-          python-version: ['3.14']
-          django-version:
-            - 'dj52' # April 2028
+    runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    env:
+      RDBMS: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      COVERAGE_FILE: postgres-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
+      ENV_FILE: postgres-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.14"]
+        django-version:
+          - "dj52" # April 2028
 
-      # Service containers to run with `runner-job`
-      services:
-        # Label used to access the service container
-        postgres:
-          # Docker Hub image
-          image: postgres:18.4-trixie@sha256:41da01536bc3ae26308cefb0c57235e7488001360bdb15191eb0b7955b570299
-          # Provide the password for postgres
-          env:
-            POSTGRES_PASSWORD: postgres
-          # Set health checks to wait until postgres has started
-          options: >-
-            --health-cmd pg_isready
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
-          ports:
-            # Maps tcp port 5432 on service container to the host
-            - 5432:5432
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:18.4-trixie@sha256:41da01536bc3ae26308cefb0c57235e7488001360bdb15191eb0b7955b570299
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
 
-      steps:
-        - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-          with:
-            persist-credentials: false
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-          id: sp
-          with:
-            python-version: ${{ matrix.python-version }}
-            allow-prereleases: true
-        - name: install-emacs-macos
-          if: ${{ github.event.inputs.debug == 'true' }}
-          run: |
-            sudo apt install emacs
-        - name: setup-ssh-debug
-          if: ${{ github.event.inputs.debug == 'true' }}
-          uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        - name: Install uv
-          uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-          with:
-            enable-cache: false
-        - name: Setup Just
-          uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-        - name: Run Unit Tests
-          env:
-            TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-          run: |
-            just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --group psycopg3
-        - name: Store coverage files
-          uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-          with:
-            name: ${{ env.COVERAGE_FILE }}
-            path: ${{ env.COVERAGE_FILE }}
-        - name: Store env files
-          uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-          with:
-            name: ${{ env.ENV_FILE }}
-            path: requirements-test*.txt
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --group psycopg3
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   linux-bash-complete:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
     env:
       COVERAGE_FILE: linux-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: linux-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
@@ -411,84 +411,84 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-linux
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        sudo apt install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Test Tab Completion
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-        source .venv/bin/activate
-        just test-bash || exit 1
-        sudo apt-get remove --purge -y powershell
-        pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure || exit 1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-linux
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Test Tab Completion
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+          source .venv/bin/activate
+          just test-bash || exit 1
+          sudo apt-get remove --purge -y powershell
+          pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure || exit 1
 
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   linux-fish-complete:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
     env:
       COVERAGE_FILE: linux-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
       ENV_FILE: linux-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}-env
@@ -497,87 +497,87 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-linux
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        sudo apt install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Install Fish shell
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y fish
-    - name: Test Tab Completion
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-        source .venv/bin/activate.fish
-        just test-fish
-      shell: fish {0}  # zizmor: ignore[misfeature]
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-linux
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Install Fish shell
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fish
+      - name: Test Tab Completion
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+          source .venv/bin/activate.fish
+          just test-fish
+        shell: fish {0} # zizmor: ignore[misfeature]
 
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   macos-zsh-complete:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
     env:
       COVERAGE_FILE: macos-zsh-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
@@ -587,93 +587,93 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-macos
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        brew install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      run: |
-        brew install just
-    - name: Install Homebrew and Zshell Completion
-      shell: zsh {0}  # zizmor: ignore[misfeature]
-      run: |
-        brew install zsh-completions
-        chmod go-w /opt/homebrew/share
-        chmod -R go-w /opt/homebrew/share/zsh
-        sudo chsh -s /bin/zsh runner
-    - name: Set SHELL variable
-      run: echo "SHELL=$(which zsh)" >> $GITHUB_ENV
-    - name: Run Unit Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      shell: zsh {0}  # zizmor: ignore[misfeature]
-      run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-        source .venv/bin/activate
-        just test-zsh || exit 1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          brew install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        run: |
+          brew install just
+      - name: Install Homebrew and Zshell Completion
+        shell: zsh {0} # zizmor: ignore[misfeature]
+        run: |
+          brew install zsh-completions
+          chmod go-w /opt/homebrew/share
+          chmod -R go-w /opt/homebrew/share/zsh
+          sudo chsh -s /bin/zsh runner
+      - name: Set SHELL variable
+        run: echo "SHELL=$(which zsh)" >> $GITHUB_ENV
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        shell: zsh {0} # zizmor: ignore[misfeature]
+        run: |
+          uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+          source .venv/bin/activate
+          just test-zsh || exit 1
 
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   macos-bash-complete:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
-          
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
+
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
     env:
       COVERAGE_FILE: macos-bash-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
@@ -683,83 +683,83 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-macos
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        brew install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      run: |
-        brew install just
-    - name: Run Unit Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-        source .venv/bin/activate
-        just test-bash || exit 1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          brew install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        run: |
+          brew install just
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+          source .venv/bin/activate
+          just test-bash || exit 1
 
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   macos-fish-complete:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
-          
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
+
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
     env:
       COVERAGE_FILE: macos-fish-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
@@ -769,91 +769,91 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-emacs-macos
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        brew install emacs
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      run: |
-        brew install just
-    - name: Install Fish
-      run: |
-        brew install fish
-        sudo bash -c 'echo $(which fish) >> /etc/shells'
-        sudo chsh -s $(which fish)
-    - name: Set SHELL variable
-      run: echo "SHELL=$(which fish)" >> $GITHUB_ENV
-    - name: Run Tab Completion Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      shell: fish {0}  # zizmor: ignore[misfeature]
-      run: |
-        uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
-        source .venv/bin/activate.fish
-        just test-fish || exit 1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          brew install emacs
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        run: |
+          brew install just
+      - name: Install Fish
+        run: |
+          brew install fish
+          sudo bash -c 'echo $(which fish) >> /etc/shells'
+          sudo chsh -s $(which fish)
+      - name: Set SHELL variable
+        run: echo "SHELL=$(which fish)" >> $GITHUB_ENV
+      - name: Run Tab Completion Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        shell: fish {0} # zizmor: ignore[misfeature]
+        run: |
+          uv sync --group test -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
+          source .venv/bin/activate.fish
+          just test-fish || exit 1
 
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   windows-powershell-complete:
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
-          
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
+
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
     env:
       COVERAGE_FILE: windows-powershell-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
@@ -863,92 +863,92 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-vim-windows
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Add to Just to PATH
-      run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
-      shell: powershell
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Run Powershell Tab Completion Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
-        . .venv\Scripts\activate.ps1
-        cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_powershell"
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        just test-powershell
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      shell: powershell
-    - name: Test CMD shell failure
-      run: |
-        call .venv\Scripts\activate
-        pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure || exit 1
-      shell: cmd  # zizmor: ignore[misfeature]
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-vim-windows
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Add to Just to PATH
+        run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
+        shell: powershell
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Run Powershell Tab Completion Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
+          . .venv\Scripts\activate.ps1
+          cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_powershell"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          just test-powershell
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        shell: powershell
+      - name: Test CMD shell failure
+        run: |
+          call .venv\Scripts\activate
+          pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure || exit 1
+        shell: cmd # zizmor: ignore[misfeature]
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   windows-pwsh-complete:
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         dependencies:
-          - 'lowest-direct'
-          - 'highest'
+          - "lowest-direct"
+          - "highest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
-          - python-version: '3.10'
-            dependencies: 'highest'
-          - python-version: '3.12'
-            dependencies: 'lowest-direct'
-          - python-version: '3.14'
-            dependencies: 'lowest-direct'
+          - python-version: "3.10"
+            dependencies: "highest"
+          - python-version: "3.12"
+            dependencies: "lowest-direct"
+          - python-version: "3.14"
+            dependencies: "lowest-direct"
 
     env:
       COVERAGE_FILE: windows-pwsh-py${{ matrix.python-version }}-${{ matrix.django-version }}.coverage
@@ -958,74 +958,75 @@ jobs:
       DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      id: sp
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: install-vim-windows
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
-    - name: setup-ssh-debug
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-    - name: Add to Just to PATH
-      run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
-      shell: pwsh
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Run Powershell Tab Completion Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
-        . .venv\Scripts\activate.ps1
-        cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_pwsh"
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        just test-pwsh
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      shell: pwsh
-    - name: Test CMD shell failure
-      run: |
-        call .venv\Scripts\activate
-        pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure
-      shell: cmd  # zizmor: ignore[misfeature]
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.ENV_FILE }}
-        path: requirements-test*.txt
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: install-vim-windows
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: rhysd/action-setup-vim@febef33995d6649302e9d88dda81e071b68f16a7
+      - name: setup-ssh-debug
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+      - name: Add to Just to PATH
+        run: echo "C:\Users\runneradmin\.local\bin" >> $env:GITHUB_PATH
+        shell: pwsh
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Run Powershell Tab Completion Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          uv sync --group test -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
+          . .venv\Scripts\activate.ps1
+          cmd /c "pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_pwsh"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          just test-pwsh
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        shell: pwsh
+      - name: Test CMD shell failure
+        run: |
+          call .venv\Scripts\activate
+          pytest --cov-append ./tests/shellcompletion/test_shell_resolution.py::test_get_win_shell_failure
+        shell: cmd # zizmor: ignore[misfeature]
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.ENV_FILE }}
+          path: requirements-test*.txt
 
   coverage-combine:
-    needs: [
-      test-linux,
-      test-windows,
-      test-macos,
-      linux-bash-complete,
-      linux-fish-complete,
-      macos-zsh-complete,
-      macos-bash-complete,
-      macos-fish-complete,
-      windows-powershell-complete,
-      windows-pwsh-complete
-    ]
+    needs:
+      [
+        test-linux,
+        test-windows,
+        test-macos,
+        linux-bash-complete,
+        linux-fish-complete,
+        macos-zsh-complete,
+        macos-bash-complete,
+        macos-fish-complete,
+        windows-powershell-complete,
+        windows-pwsh-complete,
+      ]
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # for oidc authentication to codecov
+      id-token: write # for oidc authentication to codecov
     steps:
       - name: install-emacs-linux
         if: ${{ github.event.inputs.debug == 'true' }}
@@ -1066,6 +1067,5 @@ jobs:
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           use_oidc: true
-          files:
-            ./coverage.xml
+          files: ./coverage.xml
           verbose: true
