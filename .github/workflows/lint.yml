@@ -10,46 +10,45 @@ concurrency:
 on:
   push:
     tags-ignore:
-      - '*'
-    branches: ['main']
+      - "*"
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
   workflow_call:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Open ssh debug session.'
+        description: "Open ssh debug session."
         required: true
         default: false
         type: boolean
 
 jobs:
-
   linting:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         # run static analysis on bleeding and trailing edges
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42'    # LTS April 2024
-          - 'dj52'    # April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2024
+          - "dj52" # April 2028
+          - "dj60" # April 2027
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     env:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -64,7 +63,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:

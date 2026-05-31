@@ -2,13 +2,13 @@ name: Zizmor
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths:
       - ".github/workflows/**/*.yml"
   schedule:
     # Run weekly
-    - cron: '0 0 * * 0'
+    - cron: "0 0 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write  # for post to GH security
+      security-events: write # for post to GH security
 
     steps:
       - name: Checkout repository
