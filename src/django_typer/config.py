@@ -1,6 +1,9 @@
+import os
 import typing as t
 
 from django.conf import settings
+
+TRUTHY = {"1", "true", "t", "yes", "y", "on"}
 
 
 def traceback_config() -> dict[str, t.Any]:
@@ -40,9 +43,24 @@ def use_rich_tracebacks() -> bool:
 
 def manage_script() -> str | None:
     """
-    Return the ``DJANGO_MANAGE_SCRIPT`` setting if it is set. When set, this name is used
-    verbatim as the program name in command help and as the command name shell
-    completions are installed for, instead of detecting it from the invoking script.
+    Return the ``DT_MANAGE_SCRIPT`` setting if it is set, falling back to the
+    environment variable of the same name. When set, this name is used verbatim as
+    the program name in command help and as the command name shell completions are
+    installed for, instead of detecting it from the invoking script.
     """
-    name = getattr(settings, "DJANGO_MANAGE_SCRIPT", None)
+    name = getattr(settings, "DT_MANAGE_SCRIPT", os.environ.get("DT_MANAGE_SCRIPT"))
     return str(name) if name else None
+
+
+def print_result() -> bool:
+    """
+    The project wide default for whether truthy values returned from commands are
+    written to stdout. Off unless the ``DT_PRINT_RESULT`` setting is true, falling
+    back to the environment variable of the same name (``1``, ``true``, ``yes`` or
+    ``on``, case insensitive). A command may override it with its ``print_result``
+    class field.
+    """
+    value = getattr(settings, "DT_PRINT_RESULT", os.environ.get("DT_PRINT_RESULT", ""))
+    if isinstance(value, str):
+        return value.strip().lower() in TRUTHY
+    return bool(value)

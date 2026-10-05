@@ -4,21 +4,65 @@
 Change Log
 ==========
 
-v4.0.0 (2026-09-XX)
+v4.1.2 (2026-10-01)
+===================
+
+* Drop :pypi:`django-tailwind-cli` from the showcase.
+
+v4.1.1 (2026-09-30)
+===================
+
+* Add :pypi:`django-systemd` to the showcase.
+
+v4.1.0 (2026-09-05)
+===================
+
+* Support Typer 0.27+
+* Help output follows Typer 0.27's metavar rendering (e.g. ``<str>`` instead of
+  ``TEXT`` and ``{arg}`` instead of ``ARG`` in usage lines)
+* Model field parser metavars are lowercase to match Typer's (e.g. ``<int>``, ``<txt>``)
+
+v4.0.0 (2026-09-05)
 ===================
 
 * Support Typer 0.26.8+
+* Added :attr:`~django_typer.management.TyperCommand.atomic` to run a command's whole
+  invocation - initializer, chained subcommands and finalizer - in a database transaction.
+  Implements `Add a command option that will wrap execute() in a transaction
+  <https://github.com/django-commons/django-typer/issues/219>`_. See :ref:`howto:Wrap a Command in a Transaction`.
+* Fixed chain mode being switched off when a chained command defines an initializer
+* Implemented `ModelObjectParser should have a setting that returns the lookup value if no row
+  was found. <https://github.com/django-commons/django-typer/issues/218>`_ - see the
+  ``return_lookup_on_miss`` parameter. The return value of ``on_error`` handlers is now
+  documented as the parsed value.
+* The click command tree Typer builds for a command is now cached per app and only rebuilt
+  when commands, groups, callbacks or finalizers are registered, instead of being rebuilt
+  several times on every invocation
+* Fixed `typer.Exit is swallowed on the execute() path: exit code returned as output and
+  process exits 0 <https://github.com/django-commons/django-typer/issues/318>`_
+* Fixed `Avoid redundant context construction <https://github.com/django-commons/django-typer/issues/210>`_
+* Fixed `FileBinaryRead: file is already closed <https://github.com/django-commons/django-typer/issues/209>`_
 * Fixed `Typer app options do not inherit/override correctly
   <https://github.com/django-commons/django-typer/issues/256>`_
 * Drop dependency on Click (vendored by Typer). The Click types needed to write completers
   and parsers are re-exported from :mod:`django_typer.completers` (``Context``, ``Parameter``,
   ``CompletionItem``) and :mod:`django_typer.parsers` (``Context``, ``Parameter``, ``ParamType``)
 * Drop support for Python 3.10
+* Added a :doc:`settings <settings>` reference. ``DT_MANAGE_SCRIPT`` and ``DT_PRINT_RESULT``
+  may also be given as environment variables of the same name.
+* BREAKING: Values returned from commands are no longer written to stdout by default. Set
+  ``print_result = True`` on a command, or ``DT_PRINT_RESULT = True`` in settings, to restore
+  the previous behavior.
+* Fixed result printing being applied to the wrong stream: with ``print_result`` off the
+  returned value was still written when ``stdout=`` was passed to
+  :func:`~django.core.management.call_command`, and a command instance reused after a run
+  dropped its own output.
 * Passing a ``prompt_required=False`` option flag without a value no longer triggers
   the prompt - Typer's vendored Click dropped support for this. Omit the flag to be
   prompted or pass the value explicitly.
 * Fixed `Fix documentation PDF build <https://github.com/django-commons/django-typer/issues/228>`_
-* Fixed `get_usage_script resolves full path when command is resolvable on path <https://github.com/django-commons/django-typer/issues/310>`_ and added the ``DJANGO_MANAGE_SCRIPT`` setting to override the detected program name.
+* Documented `installing shell completion for a just manage script <https://github.com/django-commons/django-typer/issues/190>`_ and other wrapped invocations, see :ref:`shell_completion:Completions for Wrapped Invocations`. Multi-word manage scripts remain unsupported (`#191 <https://github.com/django-commons/django-typer/issues/191>`_).
+* Fixed `get_usage_script resolves full path when command is resolvable on path <https://github.com/django-commons/django-typer/issues/310>`_ and added the ``DT_MANAGE_SCRIPT`` setting to override the detected program name.
 
 
 Migrating from 3.x to 4.x
@@ -79,8 +123,30 @@ Migrating from 3.x to 4.x
   completions) is now the bare command name whenever that name resolves on the path, including when
   the script was launched through a shim or wrapper of the same name or through a relative path to
   the same script. Previously the full path was shown in these cases. Set
-  ``DJANGO_MANAGE_SCRIPT`` to pin the name if you need a specific value, see
-  :ref:`configure-manage-script`.
+  ``DT_MANAGE_SCRIPT`` to pin the name if you need a specific value, see
+  :ref:`howto:Configure the Manage Script Name`.
+
+* :exc:`typer.Exit`, :exc:`typer.Abort` and :exc:`KeyboardInterrupt` leaving a command now
+  follow one policy. From the command line the process exits with the status (``Abort``
+  prints ``Aborted!`` and exits 1, an interrupt exits 130) and nothing else is printed.
+  From :func:`~django.core.management.call_command`, a non-zero ``Exit`` and an ``Abort`` raise
+  :exc:`~django.core.management.CommandError` with ``returncode`` set, and ``Exit(0)``
+  returns ``None``. Command functions called directly from Python are plain calls and
+  whatever they raise propagates unchanged. Previously ``Exit`` was returned (and printed)
+  as the command's output when executed and ended the process when the command object was
+  called directly. See :ref:`howto:Exit Codes, Errors and Aborts`.
+
+* Return values are no longer printed. In 3.x a truthy value returned from a command was
+  written to stdout, mirroring :class:`~django.core.management.BaseCommand`. In 4.x nothing
+  is printed unless the command sets ``print_result = True`` or the project sets
+  ``DT_PRINT_RESULT = True`` - see :ref:`howto:Toggle on/off result printing`. If a command's
+  return value doubled as its output, set one of those or write the output explicitly.
+
+* Starting with 4.1 (Typer_ 0.27+), help output renders type metavars in lowercase angle
+  brackets (``<str>``, ``<int>``, ``<path>``) instead of ``TEXT``, ``INTEGER`` and ``PATH``,
+  and usage lines show required arguments as ``{arg}`` and optional arguments as ``[arg]``
+  instead of ``ARG``. The provided model field parsers follow suit (``<int>``, ``<txt>``, ...).
+  Update any tests that assert on help text.
 
 * No changes are required for chained groups (``chain=True``), finalizers, the provided
   completers and parsers, custom shell completer classes registered with
@@ -377,8 +443,9 @@ Shell Completions
         manage shellcompletion --shell zsh complete "command string"
         manage shellcompletion uninstall
 
-* The function signature for :ref:`shellcompletion fallbacks <completion_fallbacks>` has changed.
-  The fallback signature is now:
+* The function signature for :ref:`shellcompletion fallbacks
+  <shell_completion:Integrating with Other CLI Completion Libraries>` has changed. The fallback
+  signature is now:
 
     .. code-block::
 

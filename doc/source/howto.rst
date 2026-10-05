@@ -84,8 +84,6 @@ To add meta information, we annotate with the `typer.Option` class:
     Refer to the Typer_ docs on options_ for more details.
 
 
-.. _multi_commands:
-
 Define Multiple Subcommands
 ---------------------------
 
@@ -143,8 +141,6 @@ like have multiple subcommands you can define any number of functions decorated 
         command() # this will raise an error
 
 
-.. _default_cmd:
-
 Define Multiple Subcommands w/ a Default
 -----------------------------------------
 
@@ -192,8 +188,6 @@ Lets look at the help output:
     :width: 80
     :convert-png: latex
 
-.. _groups:
-
 Define Groups of Commands
 -------------------------
 
@@ -219,8 +213,6 @@ The hierarchy of groups and commands from the above example looks like this:
 
 .. image:: /_static/img/howto_groups_app_tree.png
     :align: center
-
-.. _initializer:
 
 Define an Initialization Callback
 ---------------------------------
@@ -335,7 +327,7 @@ finalizers at higher levels in the command hierarchy.
 .. tip::
 
     Finalizers can be overridden just like groups and initializers using the
-    :ref:`plugin pattern. <plugins>`
+    :ref:`plugin pattern. <extensions:Tutorial: Inheritance & Plugins>`
 
 
 Call Commands from Code
@@ -403,12 +395,197 @@ You may also fetch a subcommand function directly by passing its path:
 
 .. tip::
 
-    Also refer to the :func:`~django_typer.management.get_command` docs and :ref:`here <default_cmd>`
-    and :ref:`here <multi_commands>` for the nuances of calling commands when handle() is and is
+    Also refer to the :func:`~django_typer.management.get_command` docs and :ref:`here <howto:Define Multiple Subcommands w/ a Default>`
+    and :ref:`here <howto:Define Multiple Subcommands>` for the nuances of calling commands when handle() is and is
     not implemented.
 
 
-.. _default_options:
+.. _exit_behavior:
+
+Exit Codes, Errors and Aborts
+-----------------------------
+
+A command function can end in a number of ways: by returning a value, by raising
+:exc:`~django.core.management.CommandError`, :exc:`typer.Exit` or :exc:`typer.Abort`, by calling
+:func:`sys.exit`, by being interrupted, or by raising some other exception. What happens next
+depends on how the command was invoked, because each of the three invocation contexts has a
+different caller with different expectations:
+
+- **From the command line** (``manage.py mycommand``) the caller is the shell. The outcome is a
+  process exit status and, where appropriate, a message on stderr.
+- **From** :func:`~django.core.management.call_command` the caller is Python code that wants a
+  return value or an exception it can catch. This is Django_'s contract for management commands:
+  failures are reported by raising :exc:`~django.core.management.CommandError`, which carries the
+  exit status as its ``returncode``.
+- **Called directly** as a function (``mycommand()``, ``mycommand.subcommand()`` or
+  ``get_command("mycommand", "subcommand")()``, see :ref:`calling commands from code
+  <howto:Call Commands from Code>`) it is a plain Python call. django-typer_ does not interpose:
+  whatever the function returns is returned and whatever it raises propagates unchanged.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 28 24 24
+
+   * - The command ...
+     - Command line
+     - :func:`~django.core.management.call_command`
+     - Direct call
+   * - returns a value
+     - exit status 0, nothing printed unless :ref:`howto:Toggle on/off result printing` is set
+     - value returned
+     - value returned
+   * - raises ``CommandError(msg, returncode=n)``
+     - ``CommandError: msg`` on stderr, exit status *n*
+     - ``CommandError`` raised
+     - ``CommandError`` raised
+   * - raises ``typer.Exit(0)``
+     - exit status 0, nothing printed
+     - ``None`` returned
+     - ``typer.Exit`` raised
+   * - raises ``typer.Exit(n)``
+     - exit status *n*, nothing printed
+     - ``CommandError`` raised with ``returncode=n``, chained from the ``Exit``
+     - ``typer.Exit`` raised
+   * - raises ``typer.Abort()`` (a declined confirmation, or input ending at a prompt)
+     - ``Aborted!`` on stderr, exit status 1
+     - ``CommandError("Aborted!")`` raised with ``returncode=1``
+     - ``typer.Abort`` raised
+   * - calls ``sys.exit(n)``
+     - exit status *n*
+     - ``SystemExit`` raised
+     - ``SystemExit`` raised
+   * - is interrupted (``KeyboardInterrupt``)
+     - exit status 130, nothing printed
+     - ``KeyboardInterrupt`` raised
+     - ``KeyboardInterrupt`` raised
+   * - writes to a pipe whose reader has gone away (``| head``)
+     - exit status 1, nothing printed
+     - ``BrokenPipeError`` raised
+     - ``BrokenPipeError`` raised
+   * - raises any other exception
+     - traceback on stderr (see :ref:`configure-rich-exception-tracebacks`), exit status 1
+     - the exception raised
+     - the exception raised
+
+Some guidance that follows from the table:
+
+- :exc:`typer.Exit` carries nothing but a status. If there is something to say, say it first,
+  for example with ``typer.echo(..., err=True)`` or ``self.stderr.write(...)``, then raise
+  ``Exit``. From the command line nothing else is printed.
+- To fail with a message, prefer ``raise CommandError(msg, returncode=n)``. It is the Django_
+  idiom, it behaves the same way from every context, and other Django_ code already knows how to
+  handle it.
+- ``Exit(0)`` means success. From :func:`~django.core.management.call_command` it is
+  indistinguishable from returning ``None``.
+- ``--help`` and ``--version`` end the process during argument parsing, from the command line
+  and from :func:`~django.core.management.call_command` alike, just as they do for any
+  :class:`~django.core.management.BaseCommand`.
+
+
+Wrap a Command in a Transaction
+-------------------------------
+
+Django_'s :class:`~django.core.management.BaseCommand` has no option to run a command inside a
+database transaction (its ``output_transaction`` attribute only decorates SQL that a command
+prints). A :class:`~django_typer.management.TyperCommand` invocation may run an
+:ref:`initializer <howto:Define an Initialization Callback>`, several
+:ref:`chained <howto:Call Commands from Code>` subcommands and a
+:ref:`finalizer <howto:Collect Results with @finalize>`, so it is useful to be able to make the
+whole invocation atomic. Set the class attribute
+:attr:`~django_typer.management.TyperCommand.atomic` and everything
+:meth:`~django.core.management.BaseCommand.execute` runs is wrapped in
+:func:`django.db.transaction.atomic`:
+
+.. tabs::
+
+    .. tab:: Django-style
+
+        .. literalinclude:: ../../tests/apps/howto/management/commands/atomic.py
+            :language: python
+            :linenos:
+
+    .. tab:: Typer-style
+
+        .. literalinclude:: ../../tests/apps/howto/management/commands/atomic_typer.py
+            :language: python
+            :linenos:
+
+Running ``manage.py atomic create a create b delete c`` creates nothing: the last subcommand
+raises and rolls back the first two.
+
+:attr:`~django_typer.management.TyperCommand.atomic` accepts:
+
+.. list-table::
+   :widths: 30 70
+
+   * - ``True``
+     - The database named by the command's ``database`` option when it declares one (on the
+       initializer or on ``handle()``), otherwise the default database. This mirrors how Django_'s
+       own commands resolve their ``--database`` option.
+   * - ``"other"``
+     - The database with that alias.
+   * - ``("default", "other")``
+     - A nested :func:`~django.db.transaction.atomic` block for each alias, entered in that order.
+   * - ``"__all__"``
+     - Every database in :setting:`DATABASES`.
+
+The transaction applies when the command is run from the command line or through
+:func:`~django.core.management.call_command`, the two contexts in which django-typer_ drives the
+command. Command functions called directly from Python are plain calls and are not wrapped. The
+transaction commits when the command succeeds and rolls back on every other outcome in the
+:ref:`exit table <howto:Exit Codes, Errors and Aborts>`:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 24 24 24
+
+   * - The command ...
+     - :func:`~django.core.management.call_command`
+     - Command line
+     - Transaction
+   * - returns a value
+     - value returned
+     - normal return
+     - commit
+   * - raises ``typer.Exit(0)``
+     - ``None`` returned
+     - normal return
+     - commit
+   * - raises ``typer.Exit(n)``
+     - ``CommandError``, ``returncode=n``
+     - ``SystemExit(n)``
+     - rollback
+   * - raises ``typer.Abort()``
+     - ``CommandError("Aborted!")``
+     - ``SystemExit(1)``
+     - rollback
+   * - calls ``sys.exit(0)``
+     - ``SystemExit(0)``
+     - ``SystemExit(0)``
+     - commit
+   * - calls ``sys.exit(n)``
+     - ``SystemExit(n)``
+     - ``SystemExit(n)``
+     - rollback
+   * - is interrupted (``KeyboardInterrupt``)
+     - ``KeyboardInterrupt``
+     - ``SystemExit(130)``
+     - rollback
+   * - raises ``CommandError(returncode=n)``
+     - ``CommandError``
+     - ``SystemExit(n)``
+     - rollback
+   * - raises any other exception
+     - the exception
+     - the exception
+     - rollback
+
+.. note::
+
+    Separate databases are separate transactions. A sequence of aliases or ``"__all__"`` rolls
+    every database back when the command fails, but the commits at the end are still made one
+    database at a time.
+
 
 Change Default Django Options
 -----------------------------
@@ -421,8 +598,8 @@ default options.
 By default :class:`~django_typer.management.TyperCommand` suppresses :option:`--verbosity`. You can
 add it back by setting :attr:`~django.core.management.BaseCommand.suppressed_base_arguments` to an
 empty list. If you want to use verbosity you can simply redefine it or use one of django-typer_'s
-:ref:`provided type hints <types>` for the default :class:`~django.core.management.BaseCommand`
-options:
+:ref:`provided type hints <reference/types:Option Types>` for the default
+:class:`~django.core.management.BaseCommand` options:
 
 .. tabs::
 
@@ -438,8 +615,6 @@ options:
         .. literalinclude:: ../../tests/apps/howto/management/commands/default_options_typer.py
             :language: python
             :linenos:
-
-.. _configure:
 
 Configure Typer_ Options
 ------------------------
@@ -485,13 +660,13 @@ arguments to the :class:`~django_typer.management.TyperCommand` class inheritanc
 Define Shell Tab Completions for Parameters
 -------------------------------------------
 
-See the section on :ref:`defining shell completions.<define-shellcompletions>`
+See the section on :ref:`defining shell completions.<shell_completion:Defining Custom Completions>`
 
 
 Debug Shell Tab Completers
 --------------------------
 
-See the section on :ref:`debugging shell completers.<debug-shellcompletions>`
+See the section on :ref:`debugging shell completers.<shell_completion:Debugging Tab Completers>`
 
 
 Inherit/Override Commands
@@ -545,7 +720,7 @@ present.
 .. note::
 
     For more information on extension patterns see the tutorial on
-    :ref:`Extending Commands <plugins>`.
+    :ref:`Extending Commands <extensions:Tutorial: Inheritance & Plugins>`.
 
 
 Plugin to Existing Commands
@@ -636,7 +811,7 @@ and if it is not provided the function will be treated as a
 
     **Conflicting extensions are resolved in** :setting:`INSTALLED_APPS` **order.** For a detailed
     discussion about the utility of this pattern, see the tutorial on
-    :ref:`Extending Commands <plugins>`.
+    :ref:`Extending Commands <extensions:Tutorial: Inheritance & Plugins>`.
 
 .. warning::
 
@@ -688,8 +863,6 @@ per-deployment basis:
     the Typer_ application. It is best to not set these and allow users to configure tracebacks
     via the ``DT_RICH_TRACEBACK_CONFIG`` setting.
 
-.. _configure-manage-script:
-
 Configure the Manage Script Name
 --------------------------------
 
@@ -707,14 +880,20 @@ name is shown. Otherwise the path to the script relative to the current working 
     Usage: ./manage.py basic [OPTIONS] ARG1 ARG2
 
 If this detection does not produce the name you want, for example when your script is launched by
-a wrapper with a different name, set ``DJANGO_MANAGE_SCRIPT``. It is used verbatim in place of the
+a wrapper with a different name, set ``DT_MANAGE_SCRIPT``. It is used verbatim in place of the
 detected name for command help and by :django-admin:`shellcompletion` when no
 ``--manage-script`` is given.
 
 .. code-block:: python
     :caption: settings.py
 
-    DJANGO_MANAGE_SCRIPT = "mycli"
+    DT_MANAGE_SCRIPT = "mycli"
+
+.. tip::
+
+    If you run your manage script through another command, like a just_ recipe or
+    ``poetry run``, see :ref:`shell_completion:Completions for Wrapped Invocations` for how to get help output and tab completion
+    working with the wrapper.
 
 Add Help Text to Commands
 -------------------------
@@ -846,8 +1025,6 @@ You'll also need to make sure that Django is bootstrapped in your conf.py file:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'path.to.your.settings')
     django.setup()
 
-.. _printing:
-
 print, self.stdout and typer.echo
 ---------------------------------
 
@@ -886,10 +1063,12 @@ stdout/stderr streams:
 Toggle on/off result printing
 -----------------------------
 
-Django's :class:`~django.core.management.BaseCommand` will print any truthy values returned from the
-:meth:`~django.core.management.BaseCommand.handle` method. This may not always be desired behavior.
-By default :class:`~django_typer.management.TyperCommand` will do the same, but you may toggle this
-behavior off by setting the class field ``print_result`` to False.
+Django's :class:`~django.core.management.BaseCommand` writes any truthy value returned from
+:meth:`~django.core.management.BaseCommand.handle` to stdout.
+:class:`~django_typer.management.TyperCommand` does not: return values are for callers (see
+:ref:`howto:Call Commands from Code`) and output is whatever the command chooses to print. To get
+Django_'s behavior back, set the class field ``print_result`` to True and truthy return values
+will be written to stdout:
 
 
 .. tabs::
@@ -906,7 +1085,11 @@ behavior off by setting the class field ``print_result`` to False.
             :language: python
             :linenos:
 
-.. warning::
+The default can also be changed for a whole project with the ``DT_PRINT_RESULT`` setting. A
+command's own ``print_result`` field, when set, takes precedence over it.
 
-    We may switch the default behavior to not print in the future, so if you want guaranteed forward
-    compatible behavior you should set this field.
+.. note::
+
+    Prior to version 4.0 results were printed by default. If your commands rely on their return
+    values reaching stdout, set ``print_result = True`` on them or ``DT_PRINT_RESULT = True`` in
+    your settings.

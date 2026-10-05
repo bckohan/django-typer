@@ -17,13 +17,12 @@ apps in :setting:`INSTALLED_APPS`. There are three main extension patterns you m
 
 The django-typer_ plugin mechanism supports all three of these use cases in a way that respects
 the precedence order of apps in the :setting:`INSTALLED_APPS` setting. In this tutorial we walk
-through an example of each using a :ref:`generic backup command <generic_backup>`. First we'll see
-how we might  :ref:`use inheritance (1) <inheritance>` to override and change the behavior of a
-subcommand. Then we'll see how we can :ref:`add subcommands (2) <plugin>` to an upstream command
-using plugins. Finally we'll use pluggy_ to implement a hook system that allows us to
-:ref:`add custom logic (3) <hooks>` to an upstream command.
-
-.. _generic_backup:
+through an example of each using a
+:ref:`generic backup command <extensions:A Generic Backup Command>`. First we'll see how we
+might :ref:`use inheritance (1) <extensions:Inheritance>` to override and change the behavior of
+a subcommand. Then we'll see how we can :ref:`add subcommands (2) <extensions:CLI Plugins>` to
+an upstream command using plugins. Finally we'll use pluggy_ to implement a hook system that
+allows us to :ref:`add custom logic (3) <extensions:Logic Plugins>` to an upstream command.
 
 A Generic Backup Command
 -------------------------
@@ -71,8 +70,6 @@ subroutines added by plugins at runtime using
     $> python manage.py backup list
     Default backup routines:
         database(filename={database}.json, databases=['default'])
-
-.. _inheritance:
 
 Inheritance
 -----------
@@ -173,8 +170,6 @@ backup batch:
     Backing up ./media to ./media.tar.gz
 
 
-.. _inheritance_rationale:
-
 When Does Inheritance Make Sense?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -185,8 +180,6 @@ a different flavor of a command under a different name.
 What if other apps want to alter the same command and we don't know about them, but they may end up
 installed along with our app? This is where the plugin pattern will serve us better.
 
-
-.. _plugin:
 
 CLI Plugins
 -----------
@@ -431,8 +424,6 @@ You may even override the initializer of a predefined group:
     (i.e. ``Command.grp1.grp2.grp3.cmd``), if there is only one cmd you can simply write
     ``Command.cmd``. However, using the strict hierarchy will be robust to future changes.
 
-.. _cli_plugin_rationale:
-
 When Do CLI Plugins Make Sense?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -451,8 +442,6 @@ organize commands in code bases that serve as a framework for a particular kind 
 support selecting the features to install by the inclusion or exclusion of specific apps.
 
 
-.. _hooks:
-
 Logic Plugins
 -------------
 
@@ -462,14 +451,14 @@ the general execution flow with extension points along the way that downstream a
 provide the implementations for. Django uses IoC all over the place. Extension points are often
 called ``hooks``. **You may use a third party library to manage hooks or implement your own
 mechanism but you will always need to register hook implementations. The same plugin mechanism we
-used in the** :ref:`last section <plugin>` **provides a natural place to do this.**
+used in the** :ref:`last section <extensions:CLI Plugins>` **provides a natural place to do this.**
 
 Some Django_ apps may keep state in files in places on the filesystem unknown to other parts of
 your code base. In this section we'll use pluggy_ to define a hook for other apps to implement to
 backup their own files. Let's:
 
 1. Create a new app ``backup_files`` and inherit from our the extended media backup command we
-   created in the :ref:`inheritance section <inheritance>`.
+   created in the :ref:`inheritance section <extensions:Inheritance>`.
 2. Define a pluggy_ interface for backing up arbitrary files
 3. Add a ``files`` command to our backup command that will call all registered
    hooks to backup their own files.
@@ -562,10 +551,10 @@ Now when we run we see:
 When Do Logic Plugins Make Sense?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:ref:`CLI plugins make sense <cli_plugin_rationale>` when you want to add additional commands or
-under a common namespace or to override the entire behavior of a command. Logical plugins make
-more sense in the weeds of a particular subroutine. Our example above has the following qualities
-which makes it a good candidate:
+:ref:`CLI plugins make sense <extensions:When Do CLI Plugins Make Sense?>` when you want to add
+additional commands or under a common namespace or to override the entire behavior of a command.
+Logical plugins make more sense in the weeds of a particular subroutine. Our example above has
+the following qualities which makes it a good candidate:
 
 1. The logic makes sense under a common root name (e.g. ``./manage.py backup files``).
 2. Multiple apps may need to execute their own version of the logic to complete the operation.

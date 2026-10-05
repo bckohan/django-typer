@@ -78,10 +78,10 @@ based interface that Django developers will be familiar with. All of the
     * Use the full power of Typer_'s parameter types to validate and parse command line inputs.
     * Create beautiful and information dense help outputs.
     * Configure the rendering of exception stack traces using :doc:`rich <rich:index>`.
-    * :ref:`Install shell tab-completion support <shellcompletions>` for bash_, zsh_, fish_ and
-      powershell_.
+    * :ref:`Install shell tab-completion support <shell_completion:Tutorial: Tab-Completions>`
+      for bash_, zsh_, fish_ and powershell_.
     * :ref:`Create custom and portable shell tab-completions for your CLI parameters.
-      <define-shellcompletions>`
+      <shell_completion:Defining Custom Completions>`
     * Port existing commands (:class:`~django_typer.management.TyperCommand` is interface compatible
       with :class:`~django.core.management.BaseCommand`).
     * Use either a Django-style class-based interface or the Typer-style interface to define
@@ -90,16 +90,10 @@ based interface that Django developers will be familiar with. All of the
 
 .. warning::
 
-    **Imports from** ``django_typer`` **have been deprecated and will be removed in 3.0!** Imports
-    have moved to ``django_typer.management``:
-
-    .. code-block::
-
-        # old way
-        from django_typer import TyperCommand, command, group, initialize, Typer
-
-        # new way!
-        from django_typer.management import TyperCommand, command, group, initialize, Typer
+    There are breaking changes between 3.x and 4.x. Typer_ now vendors Click_, so
+    :pypi:`django-typer` no longer depends on the external ``click`` package. Any ``click``
+    imports will need to change.
+    :ref:`See the changelog for migration steps <changelog:Migrating from 3.x to 4.x>`.
 
 :big:`Installation`
 
@@ -247,6 +241,7 @@ the self argument in your commands.**
    extensions
    shell_completion
    howto
+   settings
    performance
    showcase
    reference/index

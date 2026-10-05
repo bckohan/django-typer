@@ -1,5 +1,5 @@
                                                                                 
- Usage: ./manage.py groups string STRING strip [OPTIONS]                        
+ Usage: ./manage.py groups string {string} strip [OPTIONS]                      
                                                                                 
  Strip white space off the ends of the string                                   
                                                                                 

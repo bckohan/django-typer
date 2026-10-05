@@ -1,10 +1,10 @@
-Usage: ./manage.py groups echo [OPTIONS] MESSAGE [ECHOES]
+Usage: ./manage.py groups echo [OPTIONS] {message} [echoes]
 
   Echo the given message the given number of times.
 
 Arguments:
-  MESSAGE   [required]
-  [ECHOES]  Number of times to echo the message.  [default: 1]
+  message  [required]
+  echoes   Number of times to echo the message.  [default: 1]
 
 Options:
   --help  Show this message and exit.

@@ -11,6 +11,8 @@ from tests.shellcompletion import (
     _ScriptCompleteTestCase,
     _InstalledScriptCompleteTestCase,
     flat_scrub,
+    _WrappedScriptCompleteTestCase,
+    wrapped_environment,
 )
 
 
@@ -92,3 +94,10 @@ class FishExeShellTests(_FishMixin, _InstalledScriptCompleteTestCase, TestCase):
     @pytest.mark.rich
     @pytest.mark.skip(reason="fish does not support ansi control sequences")
     def test_no_rich_output(self): ...
+
+
+@pytest.mark.skipif(shutil.which("fish") is None, reason="Fish not available")
+class FishWrappedShellTests(_FishMixin, _WrappedScriptCompleteTestCase, TestCase):
+    """The manage script is run through a ``manage`` wrapper on the path."""
+
+    environment = wrapped_environment(_FishMixin.environment)

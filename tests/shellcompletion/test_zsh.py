@@ -12,6 +12,8 @@ import platform
 from tests.shellcompletion import (
     _ScriptCompleteTestCase,
     _InstalledScriptCompleteTestCase,
+    _WrappedScriptCompleteTestCase,
+    wrapped_environment,
 )
 
 
@@ -91,6 +93,28 @@ class ZshExeTests(_InstalledScriptCompleteTestCase, ZshTests, TestCase):
                 zdot_dir.mkdir(exist_ok=True)
                 super().test_prompt_install(
                     env={"ZDOTDIR": str(zdot_dir.absolute())},
+                    directory=zdot_dir / ".zfunc",
+                )
+            finally:
+                if zdot_dir.exists():
+                    shutil.rmtree(zdot_dir)
+
+
+@pytest.mark.skipif(shutil.which("zsh") is None, reason="Z-Shell not available")
+class ZshWrappedTests(_WrappedScriptCompleteTestCase, ZshTests, TestCase):
+    """The manage script is run through a ``manage`` wrapper on the path."""
+
+    shell = "zsh"
+    environment = wrapped_environment(ZshTests.environment)
+
+    if platform.system() != "Windows":
+
+        def test_prompt_install(self, env={}, directory=None):
+            zdot_dir = Path(__file__).parent / "zdotdir"
+            try:
+                zdot_dir.mkdir(exist_ok=True)
+                super().test_prompt_install(
+                    env={"ZDOTDIR": str(zdot_dir.absolute()), **env},
                     directory=zdot_dir / ".zfunc",
                 )
             finally:

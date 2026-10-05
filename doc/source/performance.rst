@@ -34,9 +34,10 @@ improvements <https://github.com/django-commons/django-typer/issues/170>`_ are m
     :file: _static/img/minimal_profile.svg
 
 
-The second benchmark shows the same stats for the :ref:`polls example code <building_commands>`.
-These benchmarks compare the :class:`~django.core.management.BaseCommand` native implementation
-to the :class:`~django_typer.management.TyperCommand` implementation. They show that the overhead of
+The second benchmark shows the same stats for the
+:ref:`polls example code <tutorial:Tutorial: Building Commands>`. These benchmarks compare the
+:class:`~django.core.management.BaseCommand` native implementation to the
+:class:`~django_typer.management.TyperCommand` implementation. They show that the overhead of
 using :pypi:`django-typer` is minimal. On the order of a few 10s of milliseconds. Adding
 :pypi:`rich` increases this overhead slightly, but the impact is still barely noticeable.
 

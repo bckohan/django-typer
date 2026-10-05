@@ -10,6 +10,8 @@ from django.test import TestCase
 from tests.shellcompletion import (
     _ScriptCompleteTestCase,
     _InstalledScriptCompleteTestCase,
+    _WrappedScriptCompleteTestCase,
+    wrapped_environment,
 )
 
 
@@ -84,3 +86,11 @@ class BashExeTests(_InstalledScriptCompleteTestCase, BashTests):
             ).read_text(),
             self.get_completer(template="shell_complete/zsh.sh").source_template,
         )
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="Bash not available")
+class BashWrappedTests(_WrappedScriptCompleteTestCase, BashTests):
+    """The manage script is run through a ``manage`` wrapper on the path."""
+
+    shell = "bash"
+    environment = wrapped_environment(BashTests.environment)

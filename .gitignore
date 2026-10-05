@@ -170,4 +170,7 @@ zizmor.sarif
 requirements-test*.txt
 constraints.txt
 bandit.sarif
+.claude
 .claude/worktrees/
+other.sqlite3
+other.sqlite3-journal

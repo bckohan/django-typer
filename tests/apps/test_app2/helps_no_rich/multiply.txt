@@ -1,11 +1,12 @@
-Usage: ./manage.py groups math multiply [OPTIONS] NUMBER1 NUMBER2 NUMBERS...
+Usage: ./manage.py groups math multiply [OPTIONS] {number1} {number2}
+                                        {numbers}...
 
   Multiply the given numbers.
 
 Arguments:
-  NUMBER1     The first number.  [required]
-  NUMBER2     The second number.  [required]
-  NUMBERS...  The list of numbers to multiply: n1*n2*n3*...*nN.   [required]
+  number1     The first number.  [required]
+  number2     The second number.  [required]
+  numbers...  The list of numbers to multiply: n1*n2*n3*...*nN.   [required]
 
 Options:
   --help  Show this message and exit.

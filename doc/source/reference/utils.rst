@@ -1,7 +1,5 @@
 .. include:: ../refs.rst
 
-.. _utils:
-
 =====
 Utils
 =====

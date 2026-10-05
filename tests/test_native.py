@@ -15,48 +15,49 @@ from tests.utils import rich_installed, run_command, similarity
 
 native_help_rich = """
                                                                                 
- Usage: ./manage.py native [OPTIONS] NAME                                       
+ Usage: ./manage.py native [OPTIONS] {name}                                     
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    name      TEXT  [required]                                              │
+│ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                  Show program's version number and exit.           │
-│ --settings           TEXT  The Python path to a settings module, e.g.        │
-│                            "myproject.settings.main". If this isn't          │
-│                            provided, the DJANGO_SETTINGS_MODULE environment  │
-│                            variable will be used.                            │
-│ --pythonpath         PATH  A directory to add to the Python path, e.g.       │
-│                            "/home/djangoprojects/myproject".                 │
-│ --traceback                Raise on CommandError exceptions                  │
-│ --show-locals              Print local variables in tracebacks.              │
-│ --no-color                 Don't colorize the command output.                │
-│ --force-color              Force colorization of the command output.         │
-│ --skip-checks              Skip system checks.                               │
+│ --version                    Show program's version number and exit.         │
+│ --settings           <str>   The Python path to a settings module, e.g.      │
+│                              "myproject.settings.main". If this isn't        │
+│                              provided, the DJANGO_SETTINGS_MODULE            │
+│                              environment variable will be used.              │
+│ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
+│                              "/home/djangoprojects/myproject".               │
+│ --traceback                  Raise on CommandError exceptions                │
+│ --show-locals                Print local variables in tracebacks.            │
+│ --no-color                   Don't colorize the command output.              │
+│ --force-color                Force colorization of the command output.       │
+│ --skip-checks                Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
 native_help_no_rich = """
-Usage: ./manage.py native [OPTIONS] NAME
+Usage: ./manage.py native [OPTIONS] {name}
 
 Arguments:
-  NAME  [required]
+  name  [required]
 
 Options:
-  --version          Show program's version number and exit.
-  --settings TEXT    The Python path to a settings module, e.g.
-                     "myproject.settings.main". If this isn't provided, the
-                     DJANGO_SETTINGS_MODULE environment variable will be used.
-  --pythonpath PATH  A directory to add to the Python path, e.g.
-                     "/home/djangoprojects/myproject".
-  --traceback        Raise on CommandError exceptions
-  --no-color         Don't colorize the command output.
-  --force-color      Force colorization of the command output.
-  --skip-checks      Skip system checks.
-  --help             Show this message and exit.
+  --version            Show program's version number and exit.
+  --settings <str>     The Python path to a settings module, e.g.
+                       "myproject.settings.main". If this isn't provided, the
+                       DJANGO_SETTINGS_MODULE environment variable will be
+                       used.
+  --pythonpath <path>  A directory to add to the Python path, e.g.
+                       "/home/djangoprojects/myproject".
+  --traceback          Raise on CommandError exceptions
+  --no-color           Don't colorize the command output.
+  --force-color        Force colorization of the command output.
+  --skip-checks        Skip system checks.
+  --help               Show this message and exit.
 """
 
 native_groups_help_rich = """
@@ -67,32 +68,31 @@ native_groups_help_rich = """
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --verbosity          INTEGER RANGE [0<=x<=3]  Verbosity level; 0=minimal     │
-│                                               output, 1=normal output,       │
-│                                               2=verbose output, 3=very       │
-│                                               verbose output                 │
-│                                               [default: 0]                   │
-│ --version                                     Show program's version number  │
-│                                               and exit.                      │
-│ --settings           TEXT                     The Python path to a settings  │
-│                                               module, e.g.                   │
-│                                               "myproject.settings.main". If  │
-│                                               this isn't provided, the       │
-│                                               DJANGO_SETTINGS_MODULE         │
-│                                               environment variable will be   │
-│                                               used.                          │
-│ --pythonpath         PATH                     A directory to add to the      │
-│                                               Python path, e.g.              │
-│                                               "/home/djangoprojects/myproje… │
-│ --traceback                                   Raise on CommandError          │
-│                                               exceptions                     │
-│ --show-locals                                 Print local variables in       │
-│                                               tracebacks.                    │
-│ --no-color                                    Don't colorize the command     │
-│                                               output.                        │
-│ --force-color                                 Force colorization of the      │
-│                                               command output.                │
-│ --skip-checks                                 Skip system checks.            │
+│ --verbosity          <int range> [0<=x<=3]  Verbosity level; 0=minimal       │
+│                                             output, 1=normal output,         │
+│                                             2=verbose output, 3=very verbose │
+│                                             output                           │
+│                                             [default: 0]                     │
+│ --version                                   Show program's version number    │
+│                                             and exit.                        │
+│ --settings           <str>                  The Python path to a settings    │
+│                                             module, e.g.                     │
+│                                             "myproject.settings.main". If    │
+│                                             this isn't provided, the         │
+│                                             DJANGO_SETTINGS_MODULE           │
+│                                             environment variable will be     │
+│                                             used.                            │
+│ --pythonpath         <path>                 A directory to add to the Python │
+│                                             path, e.g.                       │
+│                                             "/home/djangoprojects/myproject… │
+│ --traceback                                 Raise on CommandError exceptions │
+│ --show-locals                               Print local variables in         │
+│                                             tracebacks.                      │
+│ --no-color                                  Don't colorize the command       │
+│                                             output.                          │
+│ --force-color                               Force colorization of the        │
+│                                             command output.                  │
+│ --skip-checks                               Skip system checks.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ main                                                                         │
@@ -102,10 +102,10 @@ native_groups_help_rich = """
 
 native_groups_main_help_rich = """
                                                                                 
- Usage: ./manage.py native_groups main [OPTIONS] NAME                           
+ Usage: ./manage.py native_groups main [OPTIONS] {name}                         
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    name      TEXT  [required]                                              │
+│ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
@@ -129,10 +129,10 @@ native_groups_grp1_help_rich = """
 
 native_groups_grp1_subgrp_help_rich = """
                                                                                 
- Usage: ./manage.py native_groups grp1 subgrp [OPTIONS] MSG COMMAND [ARGS]...   
+ Usage: ./manage.py native_groups grp1 subgrp [OPTIONS] {msg} COMMAND [ARGS]... 
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    msg      TEXT  [required]                                               │
+│ *    msg      <str>  [required]                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
@@ -141,10 +141,10 @@ native_groups_grp1_subgrp_help_rich = """
 
 native_groups_grp1_cmd1_help_rich = """
                                                                                 
- Usage: ./manage.py native_groups grp1 cmd1 [OPTIONS] COUNT                     
+ Usage: ./manage.py native_groups grp1 cmd1 [OPTIONS] {count}                   
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    count      INTEGER  [required]                                          │
+│ *    count      <int>  [required]                                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
@@ -153,10 +153,10 @@ native_groups_grp1_cmd1_help_rich = """
 
 native_groups_grp1_cmd2_help_rich = """
                                                                                 
- Usage: ./manage.py native_groups grp1 cmd2 [OPTIONS] FRACTION                  
+ Usage: ./manage.py native_groups grp1 cmd2 [OPTIONS] {fraction}                
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    fraction      FLOAT  [required]                                         │
+│ *    fraction      <float>  [required]                                       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
@@ -362,56 +362,56 @@ class TestNativeGroupsWithSelf(TestNativeGroups):
 
 native_tweaks_help_rich = """
                                                                                 
- Usage: ./manage.py native_tweaks [OPTIONS] NAME                                
+ Usage: ./manage.py native_tweaks [OPTIONS] {name}                              
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    name      TEXT  [required]                                              │
+│ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                                    Show program's version number   │
-│                                              and exit.                       │
-│ --verbosity         INTEGER RANGE [0<=x<=3]  Verbosity level; 0=minimal      │
-│                                              output, 1=normal output,        │
-│                                              2=verbose output, 3=very        │
-│                                              verbose output                  │
-│                                              [default: 1]                    │
-│ --settings          TEXT                     The Python path to a settings   │
-│                                              module, e.g.                    │
-│                                              "myproject.settings.main". If   │
-│                                              this isn't provided, the        │
-│                                              DJANGO_SETTINGS_MODULE          │
-│                                              environment variable will be    │
-│                                              used.                           │
-│ --pythonpath        PATH                     A directory to add to the       │
-│                                              Python path, e.g.               │
-│                                              "/home/djangoprojects/myprojec… │
-│ --no-color                                   Don't colorize the command      │
-│                                              output.                         │
+│ --version                                  Show program's version number and │
+│                                            exit.                             │
+│ --verbosity         <int range> [0<=x<=3]  Verbosity level; 0=minimal        │
+│                                            output, 1=normal output,          │
+│                                            2=verbose output, 3=very verbose  │
+│                                            output                            │
+│                                            [default: 1]                      │
+│ --settings          <str>                  The Python path to a settings     │
+│                                            module, e.g.                      │
+│                                            "myproject.settings.main". If     │
+│                                            this isn't provided, the          │
+│                                            DJANGO_SETTINGS_MODULE            │
+│                                            environment variable will be      │
+│                                            used.                             │
+│ --pythonpath        <path>                 A directory to add to the Python  │
+│                                            path, e.g.                        │
+│                                            "/home/djangoprojects/myproject". │
+│ --no-color                                 Don't colorize the command        │
+│                                            output.                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
 native_tweaks_help_no_rich = """
-Usage: ./manage.py native_tweaks [OPTIONS] NAME
+Usage: ./manage.py native_tweaks [OPTIONS] {name}
 
 Arguments:
-  NAME  [required]
+  name  [required]
 
 Options:
-  --version                  Show program's version number and exit.
-  --verbosity INTEGER RANGE  Verbosity level; 0=minimal output, 1=normal
-                             output, 2=verbose output, 3=very verbose output
-                             [default: 1; 0<=x<=3]
-  --settings TEXT            The Python path to a settings module, e.g.
-                             "myproject.settings.main". If this isn't
-                             provided, the DJANGO_SETTINGS_MODULE environment
-                             variable will be used.
-  --pythonpath PATH          A directory to add to the Python path, e.g.
-                             "/home/djangoprojects/myproject".
-  --no-color                 Don't colorize the command output.
-  --help                     Show this message and exit.
+  --version                Show program's version number and exit.
+  --verbosity <int range>  Verbosity level; 0=minimal output, 1=normal output,
+                           2=verbose output, 3=very verbose output  [default:
+                           1; 0<=x<=3]
+  --settings <str>         The Python path to a settings module, e.g.
+                           "myproject.settings.main". If this isn't provided,
+                           the DJANGO_SETTINGS_MODULE environment variable
+                           will be used.
+  --pythonpath <path>      A directory to add to the Python path, e.g.
+                           "/home/djangoprojects/myproject".
+  --no-color               Don't colorize the command output.
+  --help                   Show this message and exit.
 """
 
 

@@ -1,7 +1,5 @@
 .. include:: ../refs.rst
 
-.. _parsers:
-
 =======
 Parsers
 =======

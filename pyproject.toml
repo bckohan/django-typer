@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-typer"
-version = "4.0.0"
+version = "4.1.2"
 requires-python = ">=3.11,<4.0"
 description = "Use Typer to define the CLI for your Django management commands."
 authors = [
@@ -20,7 +20,7 @@ dependencies = [
     "Django>=5.2,<6.2",
     # given the reliance on private Typer internals we peg the
     # version very strictly to bug fix releases for specific feature lines.
-    "typer>=0.26.8,<0.27.0",
+    "typer>=0.27.0,<0.28.0",
 ]
 classifiers = [
     "Environment :: Console",
@@ -120,7 +120,20 @@ ignore-path = [
 # py.test options:
 DJANGO_SETTINGS_MODULE = "tests.settings.base"
 python_files = "test_*.py"
-norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__ shellcompletion"
+norecursedirs = [
+    "*.egg",
+    ".eggs",
+    "dist",
+    "build",
+    "docs",
+    ".tox",
+    ".git",
+    "__pycache__",
+    "shellcompletion",
+    ".claude",
+    "worktrees",
+    ".worktrees"
+]
 env = [
     "TERMINAL_WIDTH=80",
 ]

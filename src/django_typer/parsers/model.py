@@ -52,44 +52,72 @@ class ModelObjectParser(ParamType):
 
     :param model_cls: The model class to use for lookup.
     :param lookup_field: The field to use for lookup. Defaults to 'pk'.
-    :param on_error: A callable that will be called if the lookup fails.
-        The callable should accept three arguments: the model class, the
-        value that failed to lookup, and the exception that was raised.
-        If not provided, a CommandError will be raised.
+    :param on_error: A callable that will be called if the lookup fails, either
+        because the value could not be coerced to the field type or because no
+        matching row exists. The callable should accept three arguments: the
+        model class, the value that failed to lookup, and the exception that was
+        raised. Whatever it returns becomes the parsed value. If not provided, a
+        CommandError will be raised.
     :param return_type: The model object parser can return types other than the model
         instance (default) - use the ReturnType enumeration to return other types
         from the parser including QuerySets or the primitive values of the model fields.
+    :param return_lookup_on_miss: If True and no row matches, return the lookup value
+        instead of raising an error or calling ``on_error``. The value is returned
+        after coercion to the field type (e.g. a ``UUID`` for a ``UUIDField``), so
+        the caller receives a valid key it can use to create the missing row. Values
+        that fail coercion are still errors. Only meaningful when ``return_type`` is
+        :attr:`ReturnType.MODEL_INSTANCE`. Typer_ rejects unions of two or more
+        concrete types (``User | str``), though ``| None`` is fine, so keep the
+        parameter annotated with the model class and check the type of the value
+        at runtime:
+
+    .. code-block:: python
+
+        def handle(
+            self,
+            user: t.Annotated[
+                User,
+                typer.Argument(
+                    parser=ModelObjectParser(
+                        User, lookup_field="email", return_lookup_on_miss=True
+                    )
+                ),
+            ],
+        ):
+            if isinstance(user, str):
+                user = User.objects.create(email=user)
     """
 
-    error_handler = t.Callable[[type[models.Model], str, Exception], None]
+    error_handler = t.Callable[[type[models.Model], str, Exception], t.Any]
 
     model_cls: type[models.Model]
     lookup_field: str
     case_insensitive: bool = False
     on_error: error_handler | None = None
     return_type: ReturnType = ReturnType.MODEL_INSTANCE
+    return_lookup_on_miss: bool = False
 
     _lookup: str = ""
     _field: models.Field
     _completer: ModelObjectCompleter
 
-    __name__: str = "MODEL"  # typer internals expect this
+    __name__: str = "model"  # typer internals expect this
 
     def _get_metavar(self) -> str:
         if isinstance(self._field, models.IntegerField):
-            return "INT"
+            return "int"
         elif isinstance(self._field, models.EmailField):
-            return "EMAIL"
+            return "email"
         elif isinstance(self._field, models.URLField):
-            return "URL"
+            return "url"
         elif isinstance(self._field, models.GenericIPAddressField):
-            return "[IPv4|IPv6]"
+            return "IPv4|IPv6"
         elif isinstance(self._field, models.UUIDField):
-            return "UUID"
+            return "uuid"
         elif isinstance(self._field, (models.FloatField, models.DecimalField)):
-            return "FLOAT"
+            return "float"
         elif isinstance(self._field, (models.FileField, models.FilePathField)):
-            return "PATH"
+            return "path"
         elif isinstance(self._field, models.DateTimeField):
             return "ISO 8601"
         elif isinstance(self._field, models.DateField):
@@ -98,7 +126,7 @@ class ModelObjectParser(ParamType):
             return "HH:MM:SS.sss"
         elif isinstance(self._field, models.DurationField):
             return "ISO 8601"
-        return "TXT"
+        return "txt"
 
     def __init__(
         self,
@@ -107,6 +135,7 @@ class ModelObjectParser(ParamType):
         case_insensitive: bool = case_insensitive,
         on_error: error_handler | None = on_error,
         return_type: ReturnType = return_type,
+        return_lookup_on_miss: bool = return_lookup_on_miss,
     ):
         from django.contrib.contenttypes.fields import GenericForeignKey
 
@@ -116,6 +145,7 @@ class ModelObjectParser(ParamType):
         )
         self.on_error = on_error
         self.return_type = return_type
+        self.return_lookup_on_miss = return_lookup_on_miss
         self.case_insensitive = case_insensitive
         field = self.model_cls._meta.get_field(self.lookup_field)
         assert not isinstance(field, (models.ForeignObjectRel, GenericForeignKey)), (
@@ -131,7 +161,8 @@ class ModelObjectParser(ParamType):
         Invoke the parsing action on the given string. If the value is
         already a model instance of the expected type the value will
         be returned. Otherwise the value will be treated as a value to query
-        against the lookup_field. If no model object is found the error
+        against the lookup_field. If no model object is found the lookup value
+        is returned when ``return_lookup_on_miss`` is set, otherwise the error
         handler is invoked if one was provided.
 
         :param value: The value to parse.
@@ -179,6 +210,8 @@ class ModelObjectParser(ParamType):
                 f"{original} is not a valid {self._field.__class__.__name__}"
             ) from err
         except self.model_cls.DoesNotExist as err:
+            if self.return_lookup_on_miss:
+                return value
             if self.on_error:
                 return self.on_error(self.model_cls, original, err)
             raise CommandError(

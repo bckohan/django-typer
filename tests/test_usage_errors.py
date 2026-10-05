@@ -23,7 +23,7 @@ class UsageErrorTests(TestCase):
     def test_bad_param(self):
         result = run_command("error", "a")
         self.assertTrue("Test usage error behavior." in result[0])
-        self.assertTrue("'a' is not a valid integer." in result[1])
+        self.assertTrue("'a' is not a valid int." in result[1])
 
         with self.assertRaises(CommandError):
             call_command("error", "a")
@@ -39,7 +39,7 @@ class UsageErrorTests(TestCase):
     def test_bad_option(self):
         result = run_command("error", "--opt1", "d")
         self.assertTrue("Test usage error behavior." in result[0])
-        self.assertTrue("'d' is not a valid integer." in result[1])
+        self.assertTrue("'d' is not a valid int." in result[1])
 
         with self.assertRaises(CommandError):
             call_command("error", "--opt1", "d")

@@ -2,7 +2,7 @@ from django_typer.management import TyperCommand
 
 
 class Command(TyperCommand):
-    print_result = False
+    print_result = True
 
     def handle(self):
-        return "This will not be printed"
+        return "This will be printed"

@@ -1,5 +1,5 @@
                                                                                 
- Usage: ./manage.py groups setting SETTING print [OPTIONS]                      
+ Usage: ./manage.py groups setting {setting} print [OPTIONS]                    
                                                                                 
  Print the setting value.                                                       
                                                                                 

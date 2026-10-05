@@ -1,4 +1,4 @@
-Usage: ./manage.py groups string STRING case upper [OPTIONS]
+Usage: ./manage.py groups string {string} case upper [OPTIONS]
 
   Convert the given string to upper case.
 

@@ -331,33 +331,47 @@ def test_get_usage_script_not_on_path(tmp_path, monkeypatch):
 
 
 def test_get_usage_script_manage_script_setting(tmp_path, monkeypatch):
-    """DJANGO_MANAGE_SCRIPT overrides script detection when no script is given."""
+    """DT_MANAGE_SCRIPT overrides script detection when no script is given."""
     monkeypatch.setenv("PATH", str(tmp_path / "empty"))
     monkeypatch.setattr(sys, "argv", [str(tmp_path / "proj" / "manage.py")])
-    with override_settings(DJANGO_MANAGE_SCRIPT="mycli"):
+    with override_settings(DT_MANAGE_SCRIPT="mycli"):
         assert get_usage_script() == "mycli"
         # an explicitly requested script still wins
         assert (
             get_usage_script(str(tmp_path / "x" / "y"))
             == (tmp_path / "x" / "y").absolute()
         )
-    with override_settings(DJANGO_MANAGE_SCRIPT=None):
+    with override_settings(DT_MANAGE_SCRIPT=None):
         assert isinstance(get_usage_script(), Path)
 
 
+def test_get_usage_script_manage_script_env(tmp_path, monkeypatch):
+    """DT_MANAGE_SCRIPT in the environment is used when the setting is absent."""
+    from django.conf import settings
+
+    monkeypatch.setenv("PATH", str(tmp_path / "empty"))
+    monkeypatch.setattr(sys, "argv", [str(tmp_path / "proj" / "manage.py")])
+    monkeypatch.delattr(settings._wrapped, "DT_MANAGE_SCRIPT", raising=False)
+    monkeypatch.setenv("DT_MANAGE_SCRIPT", "envcli")
+    assert get_usage_script() == "envcli"
+    # the settings module wins over the environment
+    with override_settings(DT_MANAGE_SCRIPT="mycli"):
+        assert get_usage_script() == "mycli"
+
+
 def test_create_parser_manage_script_setting():
-    """The DJANGO_MANAGE_SCRIPT setting is used as the prog name in command help."""
+    """The DT_MANAGE_SCRIPT setting is used as the prog name in command help."""
     from django_typer.management import get_command
 
     command = get_command("basic")
     command._called_from_command_line = True
-    with override_settings(DJANGO_MANAGE_SCRIPT="mycli"):
+    with override_settings(DT_MANAGE_SCRIPT="mycli"):
         assert command.create_parser("./manage.py", "basic").prog_name == "mycli"
     assert command.create_parser("./manage.py", "basic").prog_name == "./manage.py"
 
 
 def test_manage_script_setting_help_usage():
-    """DJANGO_MANAGE_SCRIPT is used as the program name in help printed from the command line."""
+    """DT_MANAGE_SCRIPT is used as the program name in help printed from the command line."""
     from tests.utils import run_command
 
     stdout, stderr, retcode = run_command(

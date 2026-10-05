@@ -8,6 +8,9 @@ from django_typer.management import TyperCommand, group
 
 
 class Command(TyperCommand):
+    # values returned from the commands are written to stdout
+    print_result = True
+
     help = _("A more complex command that defines a hierarchy of subcommands.")
 
     precision = 2

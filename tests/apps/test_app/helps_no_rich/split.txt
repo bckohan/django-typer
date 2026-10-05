@@ -1,7 +1,7 @@
-Usage: ./manage.py groups string STRING split [OPTIONS]
+Usage: ./manage.py groups string {string} split [OPTIONS]
 
   Split the given string on the given separator.
 
 Options:
-  --sep TEXT  [default:  ]
-  --help      Show this message and exit.
+  --sep <str>  [default:  ]
+  --help       Show this message and exit.

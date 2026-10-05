@@ -256,20 +256,20 @@ list-missed-tests: install _log-tests test-all
 [script("bash")]
 test-bash:
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_bash tests/test_parser_completers.py tests/shellcompletion/test_bash.py || exit
-    pytest --cov-append tests/shellcompletion/test_bash.py::BashExeTests::test_prompt_install || exit
+    pytest --cov-append tests/shellcompletion/test_bash.py::BashExeTests::test_prompt_install tests/shellcompletion/test_bash.py::BashWrappedTests::test_prompt_install || exit
 
 # test zsh shell completions
 [script("zsh")]
 test-zsh:
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_zsh tests/test_parser_completers.py tests/shellcompletion/test_zsh.py || exit
-    pytest --cov-append tests/shellcompletion/test_zsh.py::ZshExeTests::test_prompt_install || exit
+    pytest --cov-append tests/shellcompletion/test_zsh.py::ZshExeTests::test_prompt_install tests/shellcompletion/test_zsh.py::ZshWrappedTests::test_prompt_install || exit
 
 # test powershell shell completions
 [script("powershell")]
 test-powershell:
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_powershell tests/test_parser_completers.py tests/test_parser_completers.py tests/shellcompletion/test_powershell.py::PowerShellTests tests/shellcompletion/test_powershell.py::PowerShellExeTests
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    pytest --cov-append tests/shellcompletion/test_powershell.py::PowerShellExeTests::test_prompt_install
+    pytest --cov-append tests/shellcompletion/test_powershell.py::PowerShellExeTests::test_prompt_install tests/shellcompletion/test_powershell.py::PowerShellWrappedTests::test_prompt_install
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # test pwsh shell completions
@@ -277,14 +277,14 @@ test-powershell:
 test-pwsh:
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_pwsh tests/test_parser_completers.py tests/shellcompletion/test_powershell.py::PWSHTests tests/shellcompletion/test_powershell.py::PWSHExeTests
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    pytest --cov-append tests/shellcompletion/test_powershell.py::PWSHExeTests::test_prompt_install
+    pytest --cov-append tests/shellcompletion/test_powershell.py::PWSHExeTests::test_prompt_install tests/shellcompletion/test_powershell.py::PWSHWrappedTests::test_prompt_install
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # test fish shell completions
 [script("fish")]
 test-fish:
     pytest --cov-append tests/shellcompletion/test_shell_resolution.py::TestShellResolution::test_fish tests/test_parser_completers.py tests/shellcompletion/test_fish.py || exit
-    pytest --cov-append tests/shellcompletion/test_fish.py::FishExeShellTests::test_prompt_install || exit
+    pytest --cov-append tests/shellcompletion/test_fish.py::FishExeShellTests::test_prompt_install tests/shellcompletion/test_fish.py::FishWrappedShellTests::test_prompt_install || exit
 
 # run specific tests (project venv)
 test *TESTS:

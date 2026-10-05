@@ -1,7 +1,5 @@
 .. include:: ./refs.rst
 
-.. _shellcompletions:
-
 =========================
 Tutorial: Tab-Completions
 =========================
@@ -166,11 +164,60 @@ installation *may still work*, but you may need to always invoke the script from
 .. tip::
 
     The command name completions are installed for is detected from the invoking script. If the
-    detected name is not right for your deployment, override it with the ``DJANGO_MANAGE_SCRIPT`` setting,
-    see :ref:`configure-manage-script`.
+    detected name is not right for your deployment, override it with the ``DT_MANAGE_SCRIPT``
+    setting, see :ref:`howto:Configure the Manage Script Name`.
 
 
-.. _completion_fallbacks:
+Completions for Wrapped Invocations
+-----------------------------------
+
+It is common to run the manage script through another tool, for example a just_ recipe
+(``just manage``), ``poetry run manage`` or ``uv run manage``. Completions cannot be installed for
+a multi-word invocation like this directly: shells register completions for a single command word
+(``just``), and the wrapping tool does not delegate completion of its arguments. The manage script
+also cannot be detected correctly when it is run this way, because the process is started by the
+wrapper, so the script django-typer_ sees may be a temporary file or a path that is not on your
+path.
+
+The solution is to give the wrapped invocation a single-word name:
+
+1. Create a one line wrapper script on your path that forwards to the wrapped invocation:
+
+   .. tabs::
+
+      .. tab:: bash, zsh, fish
+
+         .. code-block:: bash
+            :caption: ~/.local/bin/manage
+
+            #!/bin/sh
+            exec just manage "$@"
+
+      .. tab:: powershell
+
+         .. code-block:: bat
+            :caption: manage.cmd
+
+            @just manage %*
+
+2. Tell django-typer_ that ``manage`` is the name of the command, so that help output and
+   completion installation use it instead of the detected script:
+
+   .. code-block:: python
+      :caption: settings.py
+
+      DT_MANAGE_SCRIPT = "manage"
+
+3. Install completions through the wrapper:
+
+   .. code-block:: console
+
+      $ manage shellcompletion install
+
+Tab completion now works when you type ``manage <TAB>`` and help output reads ``Usage: manage ...``.
+Completions are not available when you type ``just manage <TAB>``, because just_ (like most task
+runners) does not complete the arguments of its recipes.
+
 
 Integrating with Other CLI Completion Libraries
 -----------------------------------------------
@@ -193,17 +240,16 @@ the box.
 provides hooks for implementing libraries to provide completions for their own commands.*
 
 
-.. _define-shellcompletions:
-
 Defining Custom Completions
 ===========================
 
 To define custom completion logic for your arguments_ and options_ pass the ``shell_completion``
 parameter in your type hint annotations. django-typer_ comes with a
-:ref:`few provided completers <completers>` for common Django_ types. One of the provided completers
-completes Django_ app labels and names. We might build a similar completer that only works for
-Django_ app labels like this. The ``Context``, ``Parameter`` and ``CompletionItem`` types a
-completer works with are re-exported from :mod:`django_typer.completers` - import them from there
+:ref:`few provided completers <reference/completers:Completers>` for common Django_ types. One
+of the provided completers completes Django_ app labels and names. We might build a similar
+completer that only works for Django_ app labels like this. The ``Context``, ``Parameter`` and
+``CompletionItem`` types a completer works with are re-exported from
+:mod:`django_typer.completers` - import them from there
 rather than from Click_, which is no longer a dependency of django-typer_:
 
 .. tabs::
@@ -227,8 +273,6 @@ rather than from Click_, which is no longer a dependency of django-typer_:
     See the :class:`~django_typer.completers.model.ModelObjectCompleter` for a completer that works
     for many Django_ model field types.
 
-
-.. _debug-shellcompletions:
 
 Debugging Tab Completers
 ========================
@@ -454,7 +498,7 @@ Model Objects
 This completer/parser pairing provides the ability to fetch a model object from one of its fields.
 Most field types are supported. Additionally any other field can be set as the help text that some
 shells support. Refer to the reference documentation and the
-:ref:`polls tutorial <building_commands>` for more information.
+:ref:`polls tutorial <tutorial:Tutorial: Building Commands>` for more information.
 
 .. warning::
 
@@ -515,6 +559,43 @@ parameter and the :class:`~django_typer.parsers.model.ReturnType` enumeration:
                 ),
             ],
         ):
+            ...
+
+
+Missing Objects
+~~~~~~~~~~~~~~~
+
+By default a lookup that matches no row raises a ``CommandError``, or calls the ``on_error``
+handler if one was provided (whatever the handler returns becomes the parsed value). For
+create-or-update style commands it is often more convenient to receive the lookup value itself
+when nothing matches. Pass ``return_lookup_on_miss=True`` and the parser will return the value,
+coerced to the field's type, instead of erroring. Values that cannot be coerced to the field
+type remain errors. Typer_ rejects unions of two or more concrete types (``User | str``), though
+``| None`` is fine, so keep the parameter annotated with the model class and check the type at
+runtime:
+
+.. code-block:: python
+
+    from django_typer.management import TyperCommand
+    from django_typer.utils import model_parser_completer
+
+
+    class Command(TyperCommand):
+        def handle(
+            self,
+            user: Annotated[
+                User,
+                typer.Argument(
+                    **model_parser_completer(
+                        User,
+                        lookup_field="email",
+                        return_lookup_on_miss=True,
+                    )
+                ),
+            ],
+        ):
+            if not isinstance(user, User):
+                user = User.objects.create(email=user)
             ...
 
 
@@ -603,8 +684,8 @@ shells. There are two main extension points:
    is generated and installed.
 
    You may also override the classes for the supported shells by registering your own class.
-   We recommend using the :ref:`plugins <plugins>` pattern to do this so that your custom
-   completers will respect :setting:`INSTALLED_APPS` order.
+   We recommend using the :ref:`plugins <extensions:Tutorial: Inheritance & Plugins>` pattern to
+   do this so that your custom completers will respect :setting:`INSTALLED_APPS` order.
 
 2. Override the completion script templates for your shell. The completion script templates are
    stored in the ``django_typer/templates``. You may override these templates in your project to

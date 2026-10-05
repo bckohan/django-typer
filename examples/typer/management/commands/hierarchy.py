@@ -11,6 +11,9 @@ app = Typer(
 )
 
 
+# values returned from the commands are written to stdout
+app.django_command.print_result = True
+
 math_grp = Typer(help=_("Do some math at the given precision."))
 
 app.add_typer(math_grp, name="math")

@@ -16,6 +16,8 @@ from tests.shellcompletion import (
     _ScriptCompleteTestCase,
     _InstalledScriptCompleteTestCase,
     render,
+    _WrappedScriptCompleteTestCase,
+    wrapped_environment,
 )
 
 
@@ -188,3 +190,23 @@ class PWSHExeTests(_PowerShellMixin, _InstalledScriptCompleteTestCase, TestCase)
         )
         self.remove()
         self.verify_remove()
+
+
+@pytest.mark.skipif(
+    shutil.which("powershell") is None, reason="powershell not available"
+)
+class PowerShellWrappedTests(
+    _PowerShellMixin, _WrappedScriptCompleteTestCase, TestCase
+):
+    """The manage script is run through a ``manage`` wrapper on the path."""
+
+    environment = wrapped_environment(_PowerShellMixin.environment)
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh not available")
+class PWSHWrappedTests(_PowerShellMixin, _WrappedScriptCompleteTestCase, TestCase):
+    """The manage script is run through a ``manage`` wrapper on the path."""
+
+    shell = "pwsh"
+    completer_class = PwshComplete
+    environment = wrapped_environment(_PowerShellMixin.environment)

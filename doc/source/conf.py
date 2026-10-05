@@ -53,8 +53,11 @@ extensions = [
     'sphinxcontrib.typer',
     'sphinx_tabs.tabs',
     "sphinx.ext.viewcode",
-    'sphinx.ext.intersphinx'
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.autosectionlabel',
 ]
+
+autosectionlabel_prefix_document = True
 
 svg2pdf_converter = ("cairosvg",)
 

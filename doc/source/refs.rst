@@ -15,3 +15,6 @@
 .. _pluggy: https://pluggy.readthedocs.io
 .. _CLI: https://en.wikipedia.org/wiki/Command-line_interface
 .. _Click: https://click.palletsprojects.com/
+.. _just: https://just.systems
+.. _poetry: https://python-poetry.org
+.. _uv: https://docs.astral.sh/uv/

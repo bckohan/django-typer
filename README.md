@@ -37,7 +37,7 @@ Please refer to the [full documentation](https://django-typer.readthedocs.io/) f
 
 ## 🚨 Upgrade Notice
 
-**There are breaking changes between 2.x and 3.x, mostly involving shell tab completion. [See the changelog for migration steps](https://django-typer.readthedocs.io/en/latest/changelog.html#migrating-from-2-x-to-3-x)**.
+**There are breaking changes between 3.x and 4.x. Typer now vendors Click, so django-typer no longer depends on the external `click` package. Any `click` imports will need to change. [See the changelog for migration steps](https://django-typer.readthedocs.io/en/latest/changelog.html#migrating-from-3-x-to-4-x)**.
 
 ## Installation
 
@@ -183,6 +183,9 @@ from django_typer.management import TyperCommand, group
 
 
 class Command(TyperCommand):
+    # values returned from the commands are written to stdout
+    print_result = True
+
     help = _("A more complex command that defines a hierarchy of subcommands.")
 
     precision = 2
@@ -237,6 +240,9 @@ from django_typer.management import Typer
 
 app = Typer(help=_("A more complex command that defines a hierarchy of subcommands."))
 
+
+# values returned from the commands are written to stdout
+app.django_command.print_result = True
 
 math_grp = Typer(help=_("Do some math at the given precision."))
 

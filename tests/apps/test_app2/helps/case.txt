@@ -1,5 +1,5 @@
                                                                                 
- Usage: ./manage.py groups string STRING case [OPTIONS] COMMAND [ARGS]...       
+ Usage: ./manage.py groups string {string} case [OPTIONS] COMMAND [ARGS]...     
                                                                                 
  Case operations.                                                               
                                                                                 

@@ -1,10 +1,10 @@
-Usage: ./manage.py groups string STRING case upper [OPTIONS] [BEGIN] [END]
+Usage: ./manage.py groups string {string} case upper [OPTIONS] [begin] [end]
 
   Convert the given string to upper case.
 
 Arguments:
-  [BEGIN]  The starting index of the string to operate on.  [default: 0]
-  [END]    The ending index of the string to operate on.
+  begin  The starting index of the string to operate on.  [default: 0]
+  end    The ending index of the string to operate on.
 
 Options:
   --help  Show this message and exit.

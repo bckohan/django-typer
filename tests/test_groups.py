@@ -207,7 +207,7 @@ class TestGroups(TestCase):
                 ("hey! " * 5).strip(),
             )
         else:
-            self.assertIn("manage.py groups echo [OPTIONS] MESSAGE", result[0])
+            self.assertIn("manage.py groups echo [OPTIONS] {message}", result[0])
             self.assertIn("Got unexpected extra argument(s) (5)", result[1])
             with self.assertRaises(TypeError):
                 call_command("groups", "echo", "hey!", echoes=5)
@@ -363,7 +363,7 @@ class TestGroups(TestCase):
         )
         if override:
             self.assertIn(
-                "manage.py groups string STRING case upper [OPTIONS]",
+                "manage.py groups string {string} case upper [OPTIONS]",
                 result[0],
             )
             self.assertIn("Got unexpected extra argument(s) (4 9)", result[1].strip())
@@ -408,7 +408,7 @@ class TestGroups(TestCase):
             self.assertEqual(grp_cmd.strip(), "emmatc")
         else:
             self.assertIn(
-                "manage.py groups string [OPTIONS] STRING COMMAND [ARGS]",
+                "manage.py groups string [OPTIONS] {string} COMMAND [ARGS]",
                 result[0],
             )
             self.assertIn("No such command 'strip'.", result[1])

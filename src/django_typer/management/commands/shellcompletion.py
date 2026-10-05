@@ -37,11 +37,16 @@ from typer import Argument, Option
 from typer._click.core import ParameterSource
 from typer._click.globals import get_current_context
 from typer._click.shell_completion import CompletionItem, split_arg_string
-from typer.main import get_command as get_typer_command
 
 from django_typer.completers import these_strings
 from django_typer.completers.path import import_paths
-from django_typer.management import TyperCommand, command, get_command, initialize
+from django_typer.management import (
+    TyperCommand,
+    command,
+    get_command,
+    get_typer_command,
+    initialize,
+)
 from django_typer.shells import _completers
 from django_typer.types import COMMON_PANEL
 from django_typer.utils import detect_shell, get_usage_script, get_win_shell
@@ -103,6 +108,9 @@ class Command(TyperCommand):
     """
 
     help = t.cast(str, _("Install autocompletion for the current shell."))
+
+    # completions are returned, this setting prints them (new in 4.0)
+    print_result = True
 
     # disable the system checks - no reason to run these for this one-off command
     requires_system_checks = ()

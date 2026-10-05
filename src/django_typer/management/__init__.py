@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import errno
 import inspect
 import sys
+import threading
 import typing as t
+import weakref
 from collections import deque
+from contextlib import ExitStack, contextmanager
 from copy import copy, deepcopy
 from functools import cache, cached_property
 from importlib import import_module
@@ -14,6 +18,7 @@ from django.core.management import get_commands
 from django.core.management.base import BaseCommand, CommandError
 from django.core.management.base import OutputWrapper as BaseOutputWrapper
 from django.core.management.color import Style as ColorStyle
+from django.db import DEFAULT_DB_ALIAS, connections, transaction
 from django.utils.functional import Promise, classproperty
 
 from django_typer import patch
@@ -29,12 +34,17 @@ from typer.core import TyperArgument as CoreTyperArgument
 from typer.core import TyperCommand as CoreTyperCommand
 from typer.core import TyperGroup as CoreTyperGroup
 from typer.core import TyperOption as CoreTyperOption
-from typer.main import get_command as get_typer_command
-from typer.main import get_params_convertors_ctx_param_name_from_function
+from typer.main import (
+    _typer_developer_exception_attr_name,
+    except_hook,
+    get_params_convertors_ctx_param_name_from_function,
+)
+from typer.main import get_command as _build_click_command
 from typer.models import Context as TyperContext
-from typer.models import Default, DefaultPlaceholder
+from typer.models import Default, DefaultPlaceholder, DeveloperExceptionConfig
 
 from ..config import manage_script as manage_script_setting
+from ..config import print_result as print_result_default
 from ..config import show_locals, traceback_config, use_rich_tracebacks
 from ..types import (
     ForceColor,
@@ -289,6 +299,97 @@ COMMON_DEFAULTS = {
 }
 
 
+_click_commands: weakref.WeakKeyDictionary[typer.Typer, tuple[t.Any, t.Any]] = (
+    weakref.WeakKeyDictionary()
+)
+_click_commands_lock = threading.RLock()
+
+
+def _app_signature(app: typer.Typer) -> tuple[t.Any, ...]:
+    """
+    A cheap fingerprint of everything Typer_ reads when it builds the click command
+    tree for an app: the registered commands, callback and result callback (by
+    identity), the help strings django-typer may resolve after the fact, and the
+    same for every sub-app. If it changes the cached tree is stale.
+    """
+    info = app.info
+    return (
+        id(app.registered_callback),
+        id(info.result_callback),
+        info.help,
+        tuple((id(cmd), cmd.help) for cmd in app.registered_commands),
+        tuple(
+            (id(grp), _app_signature(grp.typer_instance))
+            for grp in app.registered_groups
+            if grp.typer_instance
+        ),
+    )
+
+
+def get_typer_command(app: typer.Typer) -> t.Any:
+    """
+    Build the click command tree for a Typer_ app, or return the tree built last
+    time if nothing has been registered on the app since. Typer_ rebuilds the tree
+    on every call and Django's parse/execute split means a single invocation would
+    otherwise build it several times over.
+
+    The cache is keyed weakly by app and validated by :func:`_app_signature`, so
+    registering a command, group, callback or finalizer anywhere in the tree causes
+    a rebuild on the next use. Builds are serialized so concurrent first uses share
+    one tree.
+    """
+    # on a command instance typer_app resolves to a throwaway BoundProxy - key
+    # the cache on the underlying app so every access shares one entry
+    app = getattr(app, "proxied", app)
+    with _click_commands_lock:
+        signature = _app_signature(app)
+        cached = _click_commands.get(app)
+        if cached is not None and cached[0] == signature:
+            return cached[1]
+        command = _build_click_command(app)
+        # registration is not serialized with the build - only cache the tree if
+        # the app is still as it was when we fingerprinted it, so a cached entry
+        # always describes the state its tree was built from
+        if _app_signature(app) == signature:
+            _click_commands[app] = (signature, command)
+        return command
+
+
+def _stash_parsed_context(command: TyperCommand, args: list[str], ctx: Context) -> None:
+    """
+    Keep the context :class:`~django_typer.management.TyperParser` parsed so the
+    execute phase can reuse it. The stash is thread local because parse and execute
+    always happen in the same thread of the same call.
+    """
+    _discard_parsed_context(command)
+    _command_context.parsed = (command, args, ctx)
+
+
+def _take_parsed_context(
+    command: TyperCommand | None, args: list[str]
+) -> Context | None:
+    """
+    Pop the parsed context for this command if it matches the arguments about to
+    be executed, otherwise return None and leave any stash alone.
+    """
+    parsed = getattr(_command_context, "parsed", None)
+    if parsed and command is not None and parsed[0] is command and parsed[1] == args:
+        del _command_context.parsed
+        return parsed[2]
+    return None
+
+
+def _discard_parsed_context(command: TyperCommand) -> None:
+    """
+    Close and forget a parsed context that will not be executed, releasing any
+    resources conversion opened.
+    """
+    parsed = getattr(_command_context, "parsed", None)
+    if parsed and parsed[0] is command:
+        del _command_context.parsed
+        parsed[2].close()
+
+
 def _remove_suppressed(
     command: TyperCommand, params: dict[str, t.Any], manual: set[str] | None = None
 ) -> dict[str, t.Any]:
@@ -371,35 +472,41 @@ class Context(TyperContext):
         super().__init__(command, parent=parent, **kwargs)
         if django_command:
             self.django_command = django_command
-            if supplied_params:
-                # if we're at the top level, default django parameters that
-                # were suppressed may have been injected into execute() and
-                # wound up here. We remove them to keep the interface honest
-                supplied_params = _remove_suppressed(
-                    self.django_command,
-                    supplied_params,
-                    {
-                        param.name
-                        for param in get_typer_command(
-                            self.django_command.typer_app
-                        ).params
-                        if param.name
-                    },
-                )
         else:
             assert parent
             self.django_command = parent.django_command
-
-        if supplied_params:
-            self._supplied_params = supplied_params
-
-        self.params = self.ParamDict(
-            {**self.params, **self.supplied_params},
-            supplied=list(self.supplied_params.keys()),
-        )
+        self._apply_supplied_params(supplied_params)
         self.children = []
         if parent:
             parent.children.append(self)
+
+    def _apply_supplied_params(
+        self, supplied_params: dict[str, t.Any] | None = None
+    ) -> None:
+        """
+        Record parameters supplied via :func:`~django.core.management.call_command`
+        on this context and block the parser from overwriting them. This runs at
+        construction and again when a context parsed by
+        :class:`~django_typer.management.TyperParser` is reused for execution.
+        """
+        if supplied_params and not self.parent:
+            # if we're at the top level, default django parameters that
+            # were suppressed may have been injected into execute() and
+            # wound up here. We remove them to keep the interface honest
+            supplied_params = _remove_suppressed(
+                self.django_command,
+                supplied_params,
+                {param.name for param in self.command.params if param.name},
+            )
+        if supplied_params:
+            self._supplied_params = supplied_params
+        # supplied parameters lead so parameter order matches a context that was
+        # seeded with them before parsing, which is what callers have always seen
+        merged = dict(self.supplied_params)
+        merged.update(
+            {k: v for k, v in self.params.items() if k not in self.supplied_params}
+        )
+        self.params = self.ParamDict(merged, supplied=list(self.supplied_params.keys()))
 
 
 class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
@@ -438,6 +545,30 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
         not seem to be a good approach to do this given how deep in the click
         infrastructure the conversion happens.
         """
+
+    def make_context(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        info_name: str | None,
+        args: list[str],
+        parent: _click.Context | None = None,
+        **extra: t.Any,
+    ) -> _click.Context:
+        """
+        Django's :class:`~django.core.management.BaseCommand` parses in one step and
+        executes in another, so :class:`~django_typer.management.TyperParser` has
+        usually already parsed these arguments into a context by the time Typer_
+        asks for one during execution. Reuse that context rather than parsing (and
+        converting, prompting and running callbacks) a second time. Resources the
+        parse opened, like files, stay open until execution finishes.
+        """
+        if parent is None:
+            parsed = _take_parsed_context(extra.get("django_command"), list(args))
+            if parsed is not None:
+                parsed.command = self
+                parsed.info_name = info_name
+                parsed._apply_supplied_params(extra.get("supplied_params"))
+                return parsed
+        return super().make_context(info_name, args, parent=parent, **extra)
 
     def get_params(self, ctx: _click.Context) -> list[_click.Parameter]:
         """
@@ -990,8 +1121,53 @@ class Typer(typer.Typer, t.Generic[P, R], metaclass=AppFactory):
     def django_command(self, cmd: type[TyperCommand] | None):
         self._django_command = cmd
 
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        return super().__call__(*args, **kwargs)
+    def __call__(  # type: ignore[override]
+        self,
+        args: t.Sequence[str] | None = None,
+        prog_name: str | None = None,
+        **extra: t.Any,
+    ) -> R:
+        """
+        Run the app: build the context for the given arguments and invoke the
+        command. Unlike :meth:`typer.Typer.__call__` this does not go through
+        click's ``main()`` driver. In the driver's non-standalone mode a
+        :exc:`typer.Exit` is turned into a plain return value, which
+        :class:`~django.core.management.BaseCommand` would then print as output
+        (issue #318). Here every exception, including ``Exit``, reaches
+        :meth:`TyperCommand.__exit__`, which implements the exit policy: a real
+        exit status from the command line and a
+        :exc:`~django.core.management.CommandError` for Python callers.
+
+        :param args: the arguments to parse, defaults to ``sys.argv[1:]``
+        :param prog_name: the program name for usage messages
+        :param extra: passed to ``make_context()`` (e.g. ``supplied_params`` and
+            ``django_command``)
+        """
+        if sys.excepthook != except_hook:
+            sys.excepthook = except_hook
+        try:
+            command = get_typer_command(self)
+            if args is None:  # pragma: no cover
+                args = sys.argv[1:]
+            if prog_name is None:  # pragma: no cover
+                prog_name = f"{sys.argv[0]} {self.info.name}"
+            try:
+                with command.make_context(prog_name, list(args), **extra) as ctx:
+                    return command.invoke(ctx)
+            except EOFError as e:
+                # input ended at a prompt - click treats this as an abort
+                raise typer.Abort() from e
+        except Exception as e:
+            setattr(
+                e,
+                _typer_developer_exception_attr_name,
+                DeveloperExceptionConfig(
+                    pretty_exceptions_enable=self.pretty_exceptions_enable,
+                    pretty_exceptions_show_locals=self.pretty_exceptions_show_locals,
+                    pretty_exceptions_short=self.pretty_exceptions_short,
+                ),
+            )
+            raise
 
     def __get__(self, obj, _=None) -> Typer[P, R]:
         """
@@ -1060,11 +1236,12 @@ class Typer(typer.Typer, t.Generic[P, R], metaclass=AppFactory):
         if callback:
             self.is_method = is_method(callback)
 
+        cls = cls or DTGroup
         super().__init__(
             name=name,
             cls=type(
                 "_DTGroup",
-                (cls or DTGroup,),
+                (cls,),
                 {"django_command": self.django_command, "chain": bool(chain)},
             ),
             invoke_without_command=invoke_without_command,
@@ -1142,6 +1319,14 @@ class Typer(typer.Typer, t.Generic[P, R], metaclass=AppFactory):
                     {
                         "django_command": self.django_command,
                         "common_init": self.parent is None,
+                        # the callback's class replaces the group class typer
+                        # builds, so carry the app's chain setting over unless
+                        # the initializer sets it explicitly
+                        "chain": bool(
+                            self.info.chain
+                            if isinstance(chain, DefaultPlaceholder)
+                            else chain
+                        ),
                     },
                 ),
                 invoke_without_command=invoke_without_command,
@@ -1502,7 +1687,7 @@ class BoundProxy(t.Generic[P, R]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
         if isinstance(self.proxied, Typer) and not self.proxied.parent:
             # if we're calling a top level Typer app we need invoke Typer's call
-            return self.proxied(*args, **kwargs)
+            return t.cast(t.Callable[..., R], self.proxied)(*args, **kwargs)
         elif isinstance(self.proxied, Finalizer):
             return self.proxied(*args, _command=self.command, **kwargs)
         return _get_direct_function(self.command, self.proxied)(*args, **kwargs)
@@ -2608,24 +2793,34 @@ class TyperParser:
             base class)
         """
         with self.django_command:
+            args = list(args or [])
             cmd = get_typer_command(self.django_command.typer_app)
-            with cmd.make_context(
-                info_name=f"{self.prog_name} {self.subcommand}",
-                django_command=self.django_command,
-                args=list(args or []),
-            ) as ctx:
-                common = {
-                    **_remove_suppressed(
-                        self.django_command,
-                        COMMON_DEFAULTS,
-                        {param.name for param in cmd.params if param.name},
-                    ),
-                    **ctx.params,
-                }
-                self.django_command._traceback = common.get(
-                    "traceback", self.django_command._traceback
+            # the context is deliberately not entered/closed here - it is kept for
+            # the execute phase (see DjangoTyperMixin.make_context) so arguments are
+            # only parsed once and resources opened by conversion outlive parsing
+            try:
+                ctx = cmd.make_context(
+                    info_name=f"{self.prog_name} {self.subcommand}",
+                    django_command=self.django_command,
+                    args=list(args),
                 )
-                return _ParsedArgs(args=args or [], **common)
+            except typer.Exit as exit:
+                # --help and friends: the output has been written and, like
+                # argparse, parsing ends the process with that status
+                sys.exit(exit.exit_code)
+            _stash_parsed_context(self.django_command, args, t.cast(Context, ctx))
+            common = {
+                **_remove_suppressed(
+                    self.django_command,
+                    COMMON_DEFAULTS,
+                    {param.name for param in cmd.params if param.name},
+                ),
+                **ctx.params,
+            }
+            self.django_command._traceback = common.get(
+                "traceback", self.django_command._traceback
+            )
+            return _ParsedArgs(args=args, **common)
 
     def add_argument(self, *args, **kwargs):
         """
@@ -2641,7 +2836,23 @@ class OutputWrapper(BaseOutputWrapper):
     returned from command functions.
     """
 
-    disable: bool = False
+    _disabled: threading.local
+
+    def __init__(self, *args: t.Any, **kwargs: t.Any):
+        super().__init__(*args, **kwargs)
+        self._disabled = threading.local()
+
+    @property
+    def disable(self) -> bool:
+        """
+        Drop writes while set. The flag is per thread so that a command instance
+        shared between threads cannot silence another thread's output.
+        """
+        return getattr(self._disabled, "value", False)
+
+    @disable.setter
+    def disable(self, value: bool) -> None:
+        self._disabled.value = value
 
     def write(self, msg="", style_func=None, ending=None):
         """
@@ -2810,8 +3021,31 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
     force_color: bool = False
     skip_checks: bool = False
 
-    print_result: bool = True
-    """Turn on/off automatic write to stdout of results returned by command"""
+    print_result: bool | None = None
+    """
+    Whether truthy values returned by the command are written to stdout, as
+    :class:`~django.core.management.BaseCommand` does. Off by default: return values
+    are for callers, output is whatever the command chooses to print. Set to True to
+    turn it on for this command, or set the ``DT_PRINT_RESULT`` setting to change the
+    project wide default. None means use the setting.
+    """
+
+    atomic: bool | str | t.Sequence[str] = False
+    """
+    Run everything :meth:`execute` does - the initializer, the subcommand(s) and any
+    finalizer - inside one database transaction
+    (:func:`django.db.transaction.atomic`).
+
+    ``True`` uses the database named by the command's ``database`` option when it
+    declares one, otherwise the default database. A string names a single alias,
+    ``"__all__"`` wraps every configured database and a sequence of aliases opens
+    a nested block for each in order.
+
+    The transaction commits when the command returns, raises ``typer.Exit(0)`` or
+    calls ``sys.exit(0)`` and rolls back on every other outcome (see
+    :ref:`exit_behavior`). Command functions called directly from Python are plain
+    calls and are not wrapped.
+    """
 
     _handle: t.Callable[..., t.Any]
     _traceback: bool = False
@@ -3215,14 +3449,61 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
         """The name of the django command"""
         return self.typer_app.info.name or self.__module__.rsplit(".", maxsplit=1)[-1]
 
+    @property
+    def _executing(self) -> bool:
+        """
+        True while Django's execute() is driving this command in the current
+        thread. Kept per thread so that a command instance shared between threads
+        does not have one thread's execute() finishing switch the exit policy off
+        for another that is still running.
+        """
+        return getattr(getattr(self, "_executing_state", None), "value", False)
+
+    @_executing.setter
+    def _executing(self, value: bool) -> None:
+        self._executing_state.value = value
+
+    _executing_state: threading.local
+    """Per-thread execute() state, created once per instance in __init__."""
+
     def __enter__(self):
         _command_context.__dict__.setdefault("stack", []).append(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _command_context.stack.pop()
-        if isinstance(exc_val, typer.Exit):
-            sys.exit(exc_val.exit_code)
+        from_cli = getattr(self, "_called_from_command_line", False)
+        # The termination policy below applies when django-typer is driving the
+        # command: from the command line or through Django's execute() path
+        # (call_command). Command functions called directly from Python are plain
+        # calls and whatever they raise propagates unchanged.
+        if isinstance(exc_val, typer.Exit) and (from_cli or self._executing):
+            # Exit carries only a status - the command has already said whatever
+            # it wanted to say. From the command line become that status, for
+            # Python callers surface it the way Django commands report failure.
+            if exc_val.exit_code == 0:
+                return True
+            if from_cli:
+                sys.exit(exc_val.exit_code)
+            raise CommandError(
+                f"{self._name} exited with code {exc_val.exit_code}",
+                returncode=exc_val.exit_code,
+            ) from exc_val
+        if isinstance(exc_val, typer.Abort) and (from_cli or self._executing):
+            # a declined confirmation or an interrupted prompt
+            if from_cli:
+                self.stderr.write("Aborted!")
+                sys.exit(1)
+            raise CommandError("Aborted!", returncode=1) from exc_val
+        if isinstance(exc_val, KeyboardInterrupt) and from_cli:
+            sys.exit(130)
+        if isinstance(exc_val, OSError) and exc_val.errno == errno.EPIPE and from_cli:
+            # the reader of our output went away (e.g. `| head`) - that is not a
+            # fault. Like click's driver, exit quietly and keep the interpreter's
+            # final flush of the standard streams from raising it again.
+            sys.stdout = t.cast(t.TextIO, _click.utils.PacifyFlushWrapper(sys.stdout))
+            sys.stderr = t.cast(t.TextIO, _click.utils.PacifyFlushWrapper(sys.stderr))
+            sys.exit(1)
         if isinstance(exc_val, _click.exceptions.UsageError):
             err_msg = (
                 self.missing_args_message.format(
@@ -3258,6 +3539,9 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
         **kwargs: t.Any,
     ):
         assert self.typer_app.info.name
+        # created here, not lazily, so concurrent first uses of a shared instance
+        # cannot race to create it
+        self._executing_state = threading.local()
         _load_command_plugins(self.typer_app.info.name)
         _add_common_initializer(self)
         _resolve_help(self)
@@ -3423,13 +3707,23 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
         :return: t.Any object returned by the Typer app
         """
         with self:
+            # BaseCommand.execute() swaps in Django's own OutputWrapper when
+            # stdout=/stderr= are given - ours is what understands result
+            # printing and non-string messages, so wrap those again
+            for name in ("stdout", "stderr"):
+                wrapper = getattr(self, name)
+                if not isinstance(wrapper, OutputWrapper):
+                    replacement = OutputWrapper(wrapper._out, ending=wrapper.ending)
+                    replacement.style_func = wrapper.style_func
+                    setattr(self, name, replacement)
+            # a previous execution on this instance may have left result printing
+            # disabled - every execution starts with stdout enabled
+            self.stdout.disable = False
             result = self.typer_app(
                 args=args,
-                standalone_mode=False,
+                prog_name=f"{sys.argv[0]} {self.typer_app.info.name}",
                 supplied_params=options,
                 django_command=self,
-                complete_var=None,
-                prog_name=f"{sys.argv[0]} {self.typer_app.info.name}",
             )
             if not self.is_compound_command and isinstance(
                 self.typer_app.info.result_callback, Finalizer
@@ -3439,7 +3733,14 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
                 result = self.typer_app.info.result_callback(
                     result, **options, _command=self
                 )
-            self.stdout.disable = not self.print_result
+            # BaseCommand.execute() writes a truthy return value to stdout after
+            # handle() returns - disable stdout for that write when result printing
+            # is off. execute() re-enables it once it has returned.
+            self.stdout.disable = not (
+                self.print_result
+                if self.print_result is not None
+                else print_result_default()
+            )
             return result
 
     def run_from_argv(self, argv):
@@ -3479,8 +3780,9 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
             self.force_color = options["force_color"]
         if options.get("skip_checks", None) is not None:
             self.skip_checks = options["skip_checks"]
+        self._executing = True
         try:
-            with self:
+            with self, self._transaction(options):
                 # base class requires force_color, no_color and skip_checks to be
                 # present - we allow them to be suppressed
                 return super().execute(
@@ -3493,9 +3795,57 @@ class TyperCommand(BaseCommand, metaclass=TyperCommandMeta):
                     },
                 )
         finally:
+            self._executing = False
+            # stdout is ours once _run() has wrapped it; before that it may be
+            # Django's, where this is a harmless plain attribute
+            t.cast(OutputWrapper, self.stdout).disable = False
+            # if handle() never reached the typer app the parsed context is stale
+            _discard_parsed_context(self)
             self.no_color = no_color
             self.force_color = force_color
             self.skip_checks = skip_checks
+
+    def _atomic_aliases(self, options: dict[str, t.Any]) -> list[str]:
+        """
+        The database aliases :attr:`atomic` asks :meth:`execute` to wrap in a
+        transaction, in the order the blocks should be entered.
+        """
+        if not self.atomic:
+            return []
+        if self.atomic is True:
+            return [options.get("database") or DEFAULT_DB_ALIAS]
+        if self.atomic == "__all__":
+            return list(connections)
+        if isinstance(self.atomic, str):
+            return [self.atomic]
+        return list(self.atomic)
+
+    @contextmanager
+    def _transaction(self, options: dict[str, t.Any]) -> t.Iterator[None]:
+        """
+        Wrap the body in the transaction(s) :attr:`atomic` asks for. Any exception
+        rolls back, except a ``sys.exit()`` with a zero status which is success:
+        the transaction commits first and the exit continues afterwards.
+        ``typer.Exit`` never reaches this level - the exit policy in
+        :meth:`__exit__` has already turned it into a return (status 0) or a
+        :exc:`~django.core.management.CommandError`/``sys.exit`` (otherwise).
+        """
+        aliases = self._atomic_aliases(options)
+        if not aliases:
+            yield
+            return
+        clean_exit: SystemExit | None = None
+        with ExitStack() as stack:
+            for alias in aliases:
+                stack.enter_context(transaction.atomic(using=alias))
+            try:
+                yield
+            except SystemExit as exc:
+                if exc.code not in (None, 0):
+                    raise
+                clean_exit = exc
+        if clean_exit is not None:
+            raise clean_exit
 
     def echo(self, message: t.Any | None = None, nl: bool = True, err: bool = False):
         """

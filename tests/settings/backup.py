@@ -2,6 +2,10 @@ from pathlib import Path
 
 from .base import *
 
+# the backup example is a single database project - the second database the
+# base settings configure for the transaction tests is not part of it
+DATABASES = {"default": DATABASES["default"]}
+
 INSTALLED_APPS = [
     "tests.apps.examples.plugins.backup",
     "tests.apps.util",

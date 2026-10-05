@@ -35,7 +35,7 @@ class CallbackTests(TestCase):
             self.assertGreaterEqual(similarity(callback_help, buffer.getvalue()), 0.99)
             self.assertIn(f"Usage: ", callback_help)
             self.assertIn(
-                f"manage.py {self.cmd_name} P1 {self.cmd_name} [OPTIONS] ARG1 ARG2",
+                f"manage.py {self.cmd_name} {{p1}} {self.cmd_name} [OPTIONS] {{arg1}} {{arg2}}",
                 callback_help,
             )
 

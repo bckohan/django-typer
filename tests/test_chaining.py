@@ -39,6 +39,26 @@ class TestChaining(TestCase):
         self.assertEqual(chain.command1(option="one"), "one")
         self.assertEqual(chain.command2(option="two"), "two")
 
+    def test_chain_with_initializer(self):
+        # an initializer must not switch chain mode off and chained subcommands
+        # may take positional arguments
+        self.assertEqual(
+            call_command("chain_init", "echo", "a", "upper", "b", "echo", "c"),
+            ["a", "B", "c"],
+        )
+        self.assertEqual(
+            call_command("chain_init", "--prefix", "x-", "echo", "a", "upper", "b"),
+            ["x-a", "x-B"],
+        )
+        self.assertEqual(
+            call_command("chain_init", "echo", "a", "upper", "b", prefix="y-"),
+            ["y-a", "y-B"],
+        )
+        stdout, stderr, retcode = run_command(
+            "chain_init", "--no-color", "--prefix", "z-", "echo", "a", "upper", "b"
+        )
+        self.assertEqual(retcode, 0, stderr)
+
     def test_chain_missing_command(self):
         # a chained group without invoke_without_command requires a subcommand
         stdout, stderr, retcode = run_command("chain")

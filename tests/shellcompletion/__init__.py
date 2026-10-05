@@ -914,3 +914,132 @@ class _InstalledScriptCompleteTestCase(_CompleteTestCase):
     #         install_output = run_with_response(["Y", "Y"])
     #         self.assertIn(f"Installed autocompletion for {self.shell}", install_output)
     #         self.verify_install(directory=directory)
+
+
+WRAPPED_SETTINGS = "tests.settings.completion_wrapped"
+
+
+def wrapped_environment(environment: t.List[str]) -> t.List[str]:
+    """
+    Rewrite a shell test environment to use the wrapped completion settings.
+    """
+    return [
+        line.replace("tests.settings.completion", WRAPPED_SETTINGS)
+        for line in environment
+    ]
+
+
+class _WrappedScriptCompleteTestCase(_InstalledScriptCompleteTestCase):
+    """
+    The manage script is run through a wrapper command on the path that forwards to
+    ``python manage.py``, the way a ``just manage`` recipe or ``poetry run manage``
+    would, and the ``DT_MANAGE_SCRIPT`` setting names the wrapper. This is the
+    documented way to get completions for wrapped invocations:
+
+    https://github.com/django-commons/django-typer/issues/190
+    https://github.com/django-commons/django-typer/issues/191
+
+    Unlike the other installed script tests, install and uninstall do not pass
+    ``--manage-script`` - the setting must drive detection, because the script the
+    wrapper launches is not the command the user types.
+
+    Only the tests whose code paths the wrapper changes are kept, the rest are covered
+    by the exe tests.
+    """
+
+    manage_script = "manage"
+    launch_script = "manage"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.install_script()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.remove_script()
+
+    @classmethod
+    def install_script(cls, script=None):
+        exe = Path(sys.executable).parent / (script or cls.manage_script)
+        if platform.system() == "Windows":
+            exe.with_suffix(".cmd").write_text(
+                f'@"{sys.executable}" "{manage_py}" %*{os.linesep}'
+            )
+        else:
+            exe.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{manage_py}" "$@"\n')
+            os.chmod(exe, os.stat(exe).st_mode | 0o111)
+
+    def install(
+        self,
+        script=None,
+        force_color=False,
+        no_color=None,
+        fallback=None,
+        no_shell=False,
+        prompt=False,
+    ):
+        from django.test import override_settings
+
+        init_kwargs = {"force_color": force_color, "no_color": no_color}
+        kwargs = {"prompt": prompt}
+        if script:
+            kwargs["manage_script"] = script
+        if self.shell and not no_shell:
+            init_kwargs["shell"] = self.shell
+        if fallback:
+            kwargs["fallback"] = fallback
+        with override_settings(DT_MANAGE_SCRIPT=self.manage_script):
+            self.command.init(**init_kwargs)
+            self.command.install(**kwargs)
+        self.verify_install(script=script)
+
+    def remove(self, script=None):
+        from django.test import override_settings
+
+        kwargs = {"manage_script": script} if script else {}
+        with override_settings(DT_MANAGE_SCRIPT=self.manage_script):
+            if self.shell:
+                self.command.init(shell=self.shell)
+            self.command.uninstall(**kwargs)
+        self.verify_remove(script=script)
+
+    @pytest.mark.skipif(
+        platform.system() == "Windows",
+        reason="The wrapper is a .cmd file which cannot be spawned by name.",
+    )
+    def test_prompt_install(self, env={}, directory: t.Optional[Path] = None):
+        super().test_prompt_install(
+            env={"DJANGO_SETTINGS_MODULE": WRAPPED_SETTINGS, **env},
+            directory=directory,
+        )
+
+    not_affected = "The wrapper does not change this code path, see the exe tests."
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_multi_install(self): ...
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_fallback(self): ...
+
+    @pytest.mark.rich
+    @pytest.mark.no_rich
+    @pytest.mark.skip(reason=not_affected)
+    def test_rich_output(self): ...
+
+    @pytest.mark.rich
+    @pytest.mark.skip(reason=not_affected)
+    def test_no_rich_output(self): ...
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_settings_pass_through(self): ...
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_pythonpath_pass_through(self): ...
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_reentrant_install_uninstall(self): ...
+
+    @pytest.mark.skip(reason=not_affected)
+    def test_path_completion(self): ...
