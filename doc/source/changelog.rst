@@ -41,6 +41,7 @@ v4.2.0 (2026-10-15)
 
 * Regenerate translations with :pypi:`django-autotranslate` 2.0 and Google's paid API
 * Ship compiled (.mo) translations - previously only the .po files were packaged.
+* Translate the ``--help`` option's help text.
 * Add a ``just translate`` recipe and a Translate workflow that machine translates
   messages with :pypi:`django-autotranslate` and opens a pull request.
 * Add :pypi:`django-autotranslate` to the showcase.

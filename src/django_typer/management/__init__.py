@@ -21,6 +21,7 @@ from django.core.management.base import OutputWrapper as BaseOutputWrapper
 from django.core.management.color import Style as ColorStyle
 from django.db import DEFAULT_DB_ALIAS, connections, transaction
 from django.utils.functional import Promise, classproperty
+from django.utils.translation import gettext
 
 from django_typer import patch
 
@@ -618,6 +619,17 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
         if self._callback_is_method is None:
             self._callback_is_method = is_method(self._callback)
         return self._callback_is_method
+
+    def get_help_option(self, ctx: _click.Context) -> CoreTyperOption | None:
+        """
+        Translate the help option's help text, which Typer_ hardcodes in English.
+        The option is cached, so the text is set each time to follow the active
+        language.
+        """
+        help_option = super().get_help_option(ctx)
+        if help_option is not None:
+            help_option.help = gettext("Show this message and exit.")
+        return help_option
 
     class Converter:
         """
