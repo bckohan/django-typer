@@ -330,9 +330,27 @@ coverage:
 run +ARGS:
     uv run {{ ARGS }}
 
-# # generate translations using google translate
-# translate: install-translate
-#     @just manage translate --settings tests.settings.translate
+# machine translate this library's messages into all languages Django supports (paid google, set GOOGLE_TRANSLATE_API_KEY)
+[positional-arguments]
+[script('uv', 'run', '--project', '.', '--group', 'translate', '--script')]
+translate *OPTS:
+    import os
+    import sys
+    from pathlib import Path
+    import django
+    from django.conf import global_settings
+    from django.core.management import call_command
+    from django.utils.translation import to_locale
+    os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings.translate"
+    django.setup()
+    # English is the source language
+    locales = sorted({to_locale(code) for code, _ in global_settings.LANGUAGES if not code.startswith("en")})
+    os.chdir(Path("src") / "django_typer")
+    Path("locale").mkdir(exist_ok=True)
+    call_command("makemessages", locale=locales, no_obsolete=True, verbosity=0)
+    # uses the service configured in tests/settings/translate.py
+    call_command("autotranslate", "--path", "locale", *sys.argv[1:])
+    call_command("compilemessages", verbosity=0)
 
 # generate and document benchmarks
 benchmark:

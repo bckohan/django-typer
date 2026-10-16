@@ -53,6 +53,8 @@ cover/
 
 # Translations
 *.mo
+# ship this library's compiled translations
+!src/django_typer/locale/**/*.mo
 *.pot
 
 # Django stuff:

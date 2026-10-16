@@ -1,0 +1,64 @@
+name: Translate
+
+# Machine translate the library's messages with the paid Google Cloud Translation API
+# (just translate) and open a pull request with any changes.
+#
+# Requires an environment named "google-translate" with a GOOGLE_TRANSLATE_API_KEY
+# secret. Add yourself as a required reviewer on the environment to approve each run.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: translate
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      options:
+        description: "Extra autotranslate options (e.g. -l de -l fr, --retranslate)."
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    environment: google-translate
+    permissions:
+      contents: write # needed for the translation PR
+      pull-requests: write # needed for the translation PR
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.14"
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+        with:
+          just-version: "1.58.0"
+      - name: Install gettext
+        run: sudo apt-get install -y gettext
+      - name: Translate
+        env:
+          GOOGLE_TRANSLATE_API_KEY: ${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
+          OPTIONS: ${{ inputs.options }}
+        run: just translate $OPTIONS
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: bot-translate
+          add-paths: |
+            src/django_typer/locale
+          title: "🤖 Update translations 🤖"
+          body: "Machine translations of new and changed messages from the Google Cloud Translation API (`just translate`). Please review before merging."
+          commit-message: "Update machine translations"

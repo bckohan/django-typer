@@ -248,6 +248,10 @@ docs = [
 profiling = [
     "tuna>=0.5.11",
 ]
+# machine translate the library's messages with just translate
+translate = [
+    "django-autotranslate[google]>=2.0,<3.0",
+]
 psycopg3 = [
     "psycopg>=3.1.8",
 ]
