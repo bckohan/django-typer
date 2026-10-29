@@ -211,3 +211,6 @@ msgstr "Systemprüfungen überspringen."
 #~ msgstr ""
 #~ "Versuchen Sie [blue]&#39;{command_path} {help_option}&#39;[/], um Hilfe zu "
 #~ "erhalten."
+
+msgid "Show this message and exit."
+msgstr "Diese Nachricht anzeigen und beenden."
