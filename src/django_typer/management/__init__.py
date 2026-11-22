@@ -727,7 +727,6 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
         **kwargs: t.Any,
     ):
         params = params or []
-        _use_dt_params(params)
         self._callback = callback
         expected = [
             param.name for param in params[1 if self.is_method else 0 :] if param.name
@@ -758,19 +757,12 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
                 ),
             )
 
-        super().__init__(
-            *args,
-            params=[
-                *(params[1:] if self.is_method else params),
-                *[
-                    param
-                    for param in self.common_params()
-                    if param.name not in expected
-                ],
-            ],
-            callback=call_with_self,
-            **kwargs,
-        )
+        all_params = [
+            *(params[1:] if self.is_method else params),
+            *[param for param in self.common_params() if param.name not in expected],
+        ]
+        _use_dt_params(all_params)
+        super().__init__(*args, params=all_params, callback=call_with_self, **kwargs)
 
 
 class DTCommand(DjangoTyperMixin, CoreTyperCommand):

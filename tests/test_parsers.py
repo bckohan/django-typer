@@ -106,3 +106,34 @@ class TestParserTypeLabels(TestCase):
         # tuples keep their arity and choices keep their values
         self.assertRegex(stdout, r"--pair\s+<str,str>")
         self.assertRegex(stdout, r"--color\s+<red\|blue>")
+
+    def test_label_rules_in_process(self):
+        from io import StringIO
+
+        from django_typer.management import DTArgument, DTOption, get_command
+
+        for name, expected in (
+            ("parser_labels", [r"--func\s+<named>", r"--pair\s+<str,str>"]),
+            ("deprecated_param_type", [r"value\s+<upper>"]),
+            ("completion", [r"<list\[APP_LABEL\]>", r"--option\s+<APP_LABEL>"]),
+        ):
+            stdout = StringIO()
+            cmd = get_command(name, no_color=True, stdout=stdout)
+            cmd.print_help("./manage.py", name)
+            for pattern in expected:
+                self.assertRegex(stdout.getvalue(), pattern)
+
+        params = get_command("parser_labels").command_tree.click_command.params
+        self.assertTrue(params)
+        for param in params:
+            self.assertIsInstance(param, (DTOption, DTArgument))
+
+    def test_only_typer_params_are_switched(self):
+        from django_typer.management import _use_dt_params
+
+        class NotATyperParam:
+            pass
+
+        other = NotATyperParam()
+        _use_dt_params([other])
+        self.assertIs(type(other), NotATyperParam)
