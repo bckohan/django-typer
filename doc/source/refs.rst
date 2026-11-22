@@ -18,3 +18,4 @@
 .. _just: https://just.systems
 .. _poetry: https://python-poetry.org
 .. _uv: https://docs.astral.sh/uv/
+.. _Pydantic: https://docs.pydantic.dev

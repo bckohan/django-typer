@@ -20,6 +20,11 @@ v4.3.0 (2026-11-21)
   parser's ``__name__`` (e.g. ``<uuid>`` for a
   :class:`~django_typer.parsers.model.ModelObjectParser` on a UUIDField), which Typer_ 0.29
   no longer does on its own.
+* Invalid parameter values are reported with Typer_ 0.29's Pydantic based messages, e.g.
+  ``Input should be a valid integer, unable to parse string as an integer`` instead of
+  ``'a' is not a valid int.`` A ``ValueError`` raised by a custom parser is now reported as
+  ``Value error, <message>``. Raise :exc:`~django.core.management.CommandError` or
+  ``typer.BadParameter`` from parsers to control the message.
 
 
 v4.2.1 (2026-11-21)
@@ -156,6 +161,12 @@ Migrating from 3.x to 4.x
     pass the type to ``parser`` instead. Parsers already passed through ``parser`` are unaffected:
     plain callables and ``ParamType`` subclasses, including ones derived from a separately
     installed Click_, continue to work.
+
+* Starting with 4.3 (Typer 0.29+) parameter values are validated with Pydantic_, so the
+  messages for invalid values changed, e.g. ``Input should be a valid integer, unable to parse
+  string as an integer`` instead of ``'a' is not a valid int.``, and ``ValueError`` messages
+  raised by custom parsers are prefixed with ``Value error,``. Update any tests that match on
+  these messages.
 
 * Options declared with ``prompt=True, prompt_required=False`` no longer prompt when the flag is
   passed without a value, doing so is now a usage error. Omit the flag to be prompted or pass
