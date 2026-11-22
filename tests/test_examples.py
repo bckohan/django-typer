@@ -17,21 +17,21 @@ basic_help = """
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --arg3        <float>  [default: 0.5]                                        │
 │ --arg4        <int>    [default: 1]                                          │
-│ --help                 Show this message and exit.                           │
+│ --help        <bool>   Show this message and exit.                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -41,8 +41,8 @@ Usage: ./manage.py basic [OPTIONS] {arg1} {arg2}
   A basic command that uses Typer
 
 Arguments:
-  arg1  [required]
-  arg2  [required]
+  arg1 <str>  [required]
+  arg2 <str>  [required]
 
 Options:
   --arg3 <float>       [default: 0.5]
@@ -91,7 +91,7 @@ Usage: ./manage.py multi create [OPTIONS] {name}
   Create an object.
 
 Arguments:
-  name  The name of the object to create.  [required]
+  name <str>  The name of the object to create.  [required]
 
 Options:
   --help  Show this message and exit.
@@ -103,7 +103,7 @@ Usage: ./manage.py multi delete [OPTIONS] {id}
   Delete an object.
 
 Arguments:
-  id  The id of the object to delete.  [required]
+  id <int>  The id of the object to delete.  [required]
 
 Options:
   --help  Show this message and exit.
@@ -116,21 +116,21 @@ multi_help = """
  A command that defines subcommands.                                            
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ create  Create an object.                                                    │
@@ -148,7 +148,7 @@ multi_create_help = """
 │ *    name      <str>  The name of the object to create. [required]           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -162,7 +162,7 @@ multi_delete_help = """
 │ *    id      <int>  The id of the object to delete. [required]               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -173,21 +173,21 @@ hierarchy_help = """
  A more complex command that defines a hierarchy of subcommands.                
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ math  Do some math at the given precision.                                   │
@@ -245,8 +245,8 @@ hierarchy_math_divide_help = """
 │ *    denominator      <float>  The denominator [required]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --floor    --no-floor      Use floor division [default: no-floor]            │
-│ --help                     Show this message and exit.                       │
+│ --floor    --no-floor    <bool>  Use floor division [default: no-floor]      │
+│ --help                   <bool>  Show this message and exit.                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -257,10 +257,10 @@ hierarchy_math_multiply_help = """
  Multiply the given numbers.                                                    
                                                                                 
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
-│ *    numbers      <float>  The numbers to multiply [required]                │
+│ *    numbers...      <list[float]>  The numbers to multiply [required]       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -284,8 +284,8 @@ Usage: ./manage.py hierarchy math divide [OPTIONS] {numerator} {denominator}
   Divide the given numbers.
 
 Arguments:
-  numerator    The numerator  [required]
-  denominator  The denominator  [required]
+  numerator <float>    The numerator  [required]
+  denominator <float>  The denominator  [required]
 
 Options:
   --floor / --no-floor  Use floor division  [default: no-floor]
@@ -298,7 +298,7 @@ Usage: ./manage.py hierarchy math multiply [OPTIONS] {numbers}...
   Multiply the given numbers.
 
 Arguments:
-  numbers...  The numbers to multiply  [required]
+  numbers... <list[float]>  The numbers to multiply  [required]
 
 Options:
   --help  Show this message and exit.

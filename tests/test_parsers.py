@@ -54,3 +54,15 @@ class TestModelObjectParserCallable(TestCase):
         self.assertEqual(parser.convert("hello"), obj)
         with self.assertRaises(CommandError):
             parser("missing")
+
+
+class TestParserTypeLabels(TestCase):
+    """
+    Parameters with a named parser are labeled with the parser's ``__name__`` in help.
+    """
+
+    def test_app_config_label(self):
+        stdout, stderr, retcode = run_command("completion", "--no-color", "--help")
+        self.assertEqual(retcode, 0, stderr)
+        self.assertRegex(stdout, r"django_apps\.*\s+<list\[APP_LABEL\]>")
+        self.assertRegex(stdout, r"--option\s+<APP_LABEL>")

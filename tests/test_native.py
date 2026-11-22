@@ -21,21 +21,21 @@ native_help_rich = """
 │ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -65,7 +65,7 @@ native_groups_help_rich = """
  Usage: ./manage.py native_groups [OPTIONS] COMMAND [ARGS]...                   
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
 │ --verbosity          <int range> [0<=x<=3]  Verbosity level; 0=minimal       │
@@ -73,7 +73,7 @@ native_groups_help_rich = """
 │                                             2=verbose output, 3=very verbose │
 │                                             output                           │
 │                                             [default: 0]                     │
-│ --version                                   Show program's version number    │
+│ --version            <bool>                 Show program's version number    │
 │                                             and exit.                        │
 │ --settings           <str>                  The Python path to a settings    │
 │                                             module, e.g.                     │
@@ -85,14 +85,14 @@ native_groups_help_rich = """
 │ --pythonpath         <path>                 A directory to add to the Python │
 │                                             path, e.g.                       │
 │                                             "/home/djangoprojects/myproject… │
-│ --traceback                                 Raise on CommandError exceptions │
-│ --show-locals                               Print local variables in         │
+│ --traceback          <bool>                 Raise on CommandError exceptions │
+│ --show-locals        <bool>                 Print local variables in         │
 │                                             tracebacks.                      │
-│ --no-color                                  Don't colorize the command       │
+│ --no-color           <bool>                 Don't colorize the command       │
 │                                             output.                          │
-│ --force-color                               Force colorization of the        │
+│ --force-color        <bool>                 Force colorization of the        │
 │                                             command output.                  │
-│ --skip-checks                               Skip system checks.              │
+│ --skip-checks        <bool>                 Skip system checks.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ main                                                                         │
@@ -108,7 +108,7 @@ native_groups_main_help_rich = """
 │ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -117,8 +117,8 @@ native_groups_grp1_help_rich = """
  Usage: ./manage.py native_groups grp1 [OPTIONS] COMMAND [ARGS]...              
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --flag    --no-flag      [default: no-flag]                                  │
-│ --help                   Show this message and exit.                         │
+│ --flag    --no-flag    <bool>  [default: no-flag]                            │
+│ --help                 <bool>  Show this message and exit.                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ cmd2                                                                         │
@@ -135,7 +135,7 @@ native_groups_grp1_subgrp_help_rich = """
 │ *    msg      <str>  [required]                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -147,7 +147,7 @@ native_groups_grp1_cmd1_help_rich = """
 │ *    count      <int>  [required]                                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -159,7 +159,7 @@ native_groups_grp1_cmd2_help_rich = """
 │ *    fraction      <float>  [required]                                       │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -368,10 +368,10 @@ native_tweaks_help_rich = """
 │ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                                  Show program's version number and │
+│ --version           <bool>                 Show program's version number and │
 │                                            exit.                             │
 │ --verbosity         <int range> [0<=x<=3]  Verbosity level; 0=minimal        │
 │                                            output, 1=normal output,          │
@@ -388,7 +388,7 @@ native_tweaks_help_rich = """
 │ --pythonpath        <path>                 A directory to add to the Python  │
 │                                            path, e.g.                        │
 │                                            "/home/djangoprojects/myproject". │
-│ --no-color                                 Don't colorize the command        │
+│ --no-color          <bool>                 Don't colorize the command        │
 │                                            output.                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """

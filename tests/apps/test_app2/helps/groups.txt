@@ -4,7 +4,7 @@
  Test groups command inheritance.                                               
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
 │ --verbosity          <int range> [0<=x<=3]  Verbosity level; 0=minimal       │
@@ -22,14 +22,14 @@
 │ --pythonpath         <path>                 A directory to add to the Python │
 │                                             path, e.g.                       │
 │                                             "/home/djangoprojects/myproject… │
-│ --traceback                                 Raise on CommandError exceptions │
-│ --show-locals                               Print local variables in         │
+│ --traceback          <bool>                 Raise on CommandError exceptions │
+│ --show-locals        <bool>                 Print local variables in         │
 │                                             tracebacks.                      │
-│ --no-color                                  Don't colorize the command       │
+│ --no-color           <bool>                 Don't colorize the command       │
 │                                             output.                          │
-│ --force-color                               Force colorization of the        │
+│ --force-color        <bool>                 Force colorization of the        │
 │                                             command output.                  │
-│ --skip-checks                               Skip system checks.              │
+│ --skip-checks        <bool>                 Skip system checks.              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ echo     Echo the given message the given number of times.                   │

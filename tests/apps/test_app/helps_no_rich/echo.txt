@@ -3,7 +3,8 @@ Usage: ./manage.py groups echo [OPTIONS] {message}
   Echo the given message.
 
 Arguments:
-  message  [required]
+  message <str>  [required]
 
 Options:
   --help  Show this message and exit.
+
