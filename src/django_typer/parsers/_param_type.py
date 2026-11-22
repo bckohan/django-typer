@@ -1,4 +1,5 @@
 import typing as t
+import warnings
 
 from typer import BadParameter
 from typer._click import Context, Parameter
@@ -20,6 +21,25 @@ class ParamType:
     """
 
     name: str = "text"
+
+    @staticmethod
+    def _deprecated(stacklevel: int) -> None:
+        warnings.warn(
+            "django_typer.parsers.ParamType is deprecated and will be removed in 5.0. "
+            "Implement parsers as callables instead.",
+            DeprecationWarning,
+            stacklevel=stacklevel,
+        )
+
+    def __init_subclass__(cls, **kwargs: t.Any) -> None:
+        super().__init_subclass__(**kwargs)
+        # only warn where ParamType itself is named as a base
+        if ParamType in cls.__bases__:
+            cls._deprecated(stacklevel=3)
+
+    def __init__(self) -> None:
+        if type(self) is ParamType:
+            self._deprecated(stacklevel=3)
 
     def __call__(
         self,
