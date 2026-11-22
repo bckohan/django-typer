@@ -82,11 +82,12 @@ def test_performance_regression():
     print(f"\ttime: {typer_no_app_time:0.4f}")
     print(f"\tmodules: {len(mods_typer_no_app)}")
 
-    # notify us if adding typer inflates module count by more than 10 percent
-    assert len(mods_no_typer) / len(mods_typer) > 0.9, (
+    # notify us if adding typer inflates module count by more than 25 percent -
+    # Typer 0.29+ validates parameters with Pydantic, which alone loads ~60 modules
+    assert len(mods_no_typer) / len(mods_typer) > 0.8, (
         f"Typer modules added: \n{pformat(set(mods_typer) - set(mods_no_typer))}"
     )
-    assert len(mods_no_typer) / len(mods_typer_no_app) > 0.9, (
+    assert len(mods_no_typer) / len(mods_typer_no_app) > 0.8, (
         f"Typer modules added: \n{pformat(set(mods_typer_no_app) - set(mods_no_typer))}"
     )
 
