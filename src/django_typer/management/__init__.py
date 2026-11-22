@@ -35,9 +35,9 @@ from typer.core import TyperCommand as CoreTyperCommand
 from typer.core import TyperGroup as CoreTyperGroup
 from typer.core import TyperOption as CoreTyperOption
 from typer.main import (
+    _get_params_name_from_function,
     _typer_developer_exception_attr_name,
     except_hook,
-    get_params_convertors_ctx_param_name_from_function,
 )
 from typer.main import get_command as _build_click_command
 from typer.models import Context as TyperContext
@@ -284,9 +284,7 @@ def _get_common_params(
     """Use typer to convert the common options to click options"""
     global _common_params
     if not _common_params:
-        _common_params = get_params_convertors_ctx_param_name_from_function(
-            _common_options
-        )[0]
+        _common_params = _get_params_name_from_function(_common_options)[0]
     suppressed = _normalize_suppressed_arguments(command)
     return [
         param for param in _common_params if param.name and param.name not in suppressed
