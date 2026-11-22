@@ -259,8 +259,8 @@ class ExitMatrixTests(TestCase):
         (
             "is given bad arguments",
             ["exit", "--code", "notanint"],
-            (1, "Usage:", "is not a valid"),
-            ("raises", CommandError, 1, "is not a valid"),
+            (1, "Usage:", "Input should be a valid integer"),
+            ("raises", CommandError, 1, "Input should be a valid integer"),
             None,
         ),
     ]
