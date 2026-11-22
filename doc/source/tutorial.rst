@@ -51,6 +51,11 @@ upstream libraries.
     :doc:`click <click:quickstart>` to use django-typer_, but you should know that it exists and is
     the engine behind much of this functionality.
 
+    Starting with `version 0.29.0 <https://github.com/fastapi/typer/releases/tag/0.29.0>`_ Typer_
+    validates parameter values with Pydantic_ instead of click's parameter types. Custom parsers
+    are plain callables that accept the value given on the command line, see
+    :mod:`django_typer.parsers`.
+
 
 Install django-typer_
 ---------------------
