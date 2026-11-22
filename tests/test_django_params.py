@@ -317,3 +317,29 @@ class TestDefaultParamOverrides(TestCase):
                 "dj_params_subgroups", "subgroup", traceback=False, skip_checks=True
             )
         )
+
+
+class TestParsedArgsDefaultOptions(TestCase):
+    """
+    Django reads settings and pythonpath off the parsed arguments - paths must be
+    strings, any other overriding type is left alone.
+    """
+
+    def test_only_paths_are_stringified(self):
+        from django_typer.management import _ParsedArgs
+
+        parsed = _ParsedArgs(args=[], settings=Path("a/b"), pythonpath=Path("c"))
+        self.assertEqual(parsed.settings, str(Path("a/b")))
+        self.assertEqual(parsed.pythonpath, "c")
+        self.assertEqual(vars(parsed)["settings"], Path("a/b"))
+
+        parsed = _ParsedArgs(args=[], settings=False, pythonpath=[])
+        self.assertIs(parsed.settings, False)
+        self.assertEqual(parsed.pythonpath, [])
+
+        parsed = _ParsedArgs(args=[])
+        self.assertIsNone(parsed.settings)
+        self.assertIsNone(parsed.pythonpath)
+        parsed.settings = "x"
+        parsed.pythonpath = Path("y")
+        self.assertEqual((parsed.settings, parsed.pythonpath), ("x", "y"))
