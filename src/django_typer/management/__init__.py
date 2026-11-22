@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import errno
 import inspect
+import os
 import sys
 import threading
 import typing as t
@@ -403,13 +404,38 @@ class _ParsedArgs(SimpleNamespace):
     """
 
     def __init__(self, args: t.Sequence[t.Any], **kwargs: t.Any):
+        kwargs.setdefault("pythonpath", None)
+        kwargs.setdefault("settings", None)
         super().__init__(**kwargs)
         self.args = args
         self.traceback = kwargs.get("traceback", TyperCommand._traceback)
-        if not hasattr(self, "pythonpath"):
-            self.pythonpath = None
-        if not hasattr(self, "settings"):
-            self.settings = None
+
+    @staticmethod
+    def _as_str(value: t.Any) -> str | None:
+        if value is None or isinstance(value, str):
+            return value
+        return os.fspath(value) if isinstance(value, os.PathLike) else str(value)
+
+    # Django's handle_default_options() reads settings and pythonpath as attributes
+    # and writes them into os.environ and sys.path, which need strings. Typer hands
+    # us converted values (e.g. Path), including for commands that override these
+    # parameters. These properties give Django strings while vars() - what is
+    # passed on to execute() - keeps the converted values the command expects.
+    @property
+    def settings(self) -> str | None:
+        return self._as_str(self.__dict__.get("settings"))
+
+    @settings.setter
+    def settings(self, value: t.Any) -> None:
+        self.__dict__["settings"] = value
+
+    @property
+    def pythonpath(self) -> str | None:
+        return self._as_str(self.__dict__.get("pythonpath"))
+
+    @pythonpath.setter
+    def pythonpath(self, value: t.Any) -> None:
+        self.__dict__["pythonpath"] = value
 
     def _get_kwargs(self):
         return vars(self)
