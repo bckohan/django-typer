@@ -3,6 +3,7 @@ import warnings
 
 from typer import BadParameter
 from typer._click import Context, Parameter
+from typer._click.shell_completion import CompletionItem
 
 
 class ParamType:
@@ -12,7 +13,9 @@ class ParamType:
     Typer_ 0.29 removed the vendored Click_ ``ParamType``. Typer_ now calls parsers with
     the string value only, so any callable works as a parser. Subclasses of this class
     keep working: calling an instance invokes :meth:`convert` with ``param`` and ``ctx``
-    set to None, exactly as earlier Typer_ versions did for parsers.
+    set to None, exactly as earlier Typer_ versions did for parsers. The rest of the
+    Click_ interface is present with its default behavior, but Typer_ only ever calls
+    the parser: overrides of methods other than :meth:`convert` have no effect.
 
     .. deprecated:: 4.3.0
 
@@ -21,6 +24,12 @@ class ParamType:
     """
 
     name: str = "text"
+
+    # The remainder of Click's ParamType interface, kept so subclasses that
+    # reference it do not break. Typer does not consult any of it.
+    is_composite: t.ClassVar[bool] = False
+    arity: t.ClassVar[int] = 1
+    envvar_list_splitter: t.ClassVar[str | None] = None
 
     @staticmethod
     def _deprecated(stacklevel: int) -> None:
@@ -74,3 +83,39 @@ class ParamType:
         """
         # typer annotates param with its private parameter class
         raise BadParameter(message, ctx=ctx, param=t.cast(t.Any, param))
+
+    def to_info_dict(self) -> dict[str, t.Any]:
+        """
+        Describe this type, as Click_'s ``ParamType`` did. Typer_ does not use this.
+        """
+        param_type = type(self).__name__.partition("ParamType")[0]
+        param_type = param_type.partition("ParameterType")[0]
+        return {"param_type": param_type, "name": self.name}
+
+    def get_metavar(self, param: Parameter, ctx: Context) -> str | None:
+        """
+        Typer_ does not use this, the help label is taken from :attr:`name`.
+        """
+        return None
+
+    def get_missing_message(self, param: Parameter, ctx: Context | None) -> str | None:
+        """
+        Typer_ does not use this.
+        """
+        return None
+
+    def split_envvar_value(self, rv: str) -> t.Sequence[str]:
+        """
+        Split an environment variable value on :attr:`envvar_list_splitter`, or
+        whitespace if it is None. Typer_ does not use this.
+        """
+        return (rv or "").split(self.envvar_list_splitter)
+
+    def shell_complete(
+        self, ctx: Context, param: Parameter, incomplete: str
+    ) -> list[CompletionItem]:
+        """
+        Typer_ does not use this, pass a completer to ``shell_complete`` on the
+        parameter instead.
+        """
+        return []

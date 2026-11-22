@@ -11,8 +11,8 @@ v4.3.0 (2026-11-21)
 * Parameter values are now validated with Pydantic_, which Typer_ 0.29 depends on. Pydantic_
   is installed as a dependency of Typer_, django-typer_ does not depend on it directly.
 * Deprecated ``django_typer.parsers.ParamType``. Typer_ 0.29 removed the vendored Click_
-  ``ParamType``; django-typer_ now provides a minimal stand-in so existing subclasses keep
-  working, but subclassing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0.
+  ``ParamType``; django-typer_ now provides a stand-in so existing subclasses keep
+  working (only ``convert`` is ever called, as before), but subclassing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0.
   Write parsers as callables instead, see :mod:`django_typer.parsers`.
 * :class:`~django_typer.parsers.model.ModelObjectParser` is now a plain callable class and no
   longer derives from ``ParamType``.
