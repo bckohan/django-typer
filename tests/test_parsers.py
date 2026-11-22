@@ -11,27 +11,37 @@ from tests.utils import run_command
 
 
 class TestParamTypeDeprecation(TestCase):
-    def test_import_warns(self):
-        import django_typer.parsers as parsers
+    def test_subclass_warns_once(self):
+        from django_typer.parsers import ParamType
 
-        with pytest.warns(DeprecationWarning, match="ParamType is deprecated"):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+
+            class Mine(ParamType):
+                pass
+
+            # only naming ParamType as a base warns, at the class definition
+            class Derived(Mine):
+                pass
+
+            Mine()
+            Derived()
+
+        self.assertEqual(len(caught), 1)
+        self.assertIs(caught[0].category, DeprecationWarning)
+        self.assertIn("ParamType is deprecated", str(caught[0].message))
+        self.assertEqual(caught[0].filename, __file__)
+
+    def test_import_does_not_warn(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
             from django_typer.parsers import ParamType  # noqa: F401
 
-        with pytest.warns(DeprecationWarning):
-            parsers.ParamType
-
-    def test_other_attributes_raise(self):
-        import django_typer.parsers as parsers
-
-        with self.assertRaises(AttributeError):
-            parsers.DoesNotExist
-
     def test_param_type_api(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            from django_typer.parsers import ParamType
+        from django_typer.parsers import ParamType
 
-        param_type = ParamType()
+        with pytest.warns(DeprecationWarning, match="ParamType is deprecated"):
+            param_type = ParamType()
         self.assertIsNone(param_type(None))
         self.assertEqual(param_type("value"), "value")
         with self.assertRaises(typer.BadParameter):

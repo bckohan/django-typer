@@ -9,18 +9,18 @@ import typer
 
 from django_typer.management import TyperCommand
 
+from django_typer.parsers import ParamType
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", DeprecationWarning)
-    from django_typer.parsers import ParamType
 
+    class Upper(ParamType):
+        name = "upper"
 
-class Upper(ParamType):
-    name = "upper"
-
-    def convert(self, value, param, ctx):
-        if value == "bad":
-            self.fail(f"{value} is not allowed.", param, ctx)
-        return value.upper()
+        def convert(self, value, param, ctx):
+            if value == "bad":
+                self.fail(f"{value} is not allowed.", param, ctx)
+            return value.upper()
 
 
 class Command(TyperCommand):

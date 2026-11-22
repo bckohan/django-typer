@@ -58,7 +58,7 @@ Django types. Pass these parsers to the `parser` argument of ``typer.Option`` an
 
     ``ParamType`` is deprecated. Typer_ 0.29 removed the vendored Click_ ``ParamType``,
     so django-typer_ provides a minimal stand-in that keeps existing subclasses working.
-    Importing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0. Write
+    Subclassing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0. Write
     parsers as callables instead, as above. ``Context`` and ``Parameter`` are still
     exported for type hints.
 """
@@ -66,20 +66,4 @@ Django types. Pass these parsers to the `parser` argument of ``typer.Option`` an
 from typer._click import Context as Context
 from typer._click import Parameter as Parameter
 
-__all__ = ["Context", "Parameter"]
-
-
-def __getattr__(name: str):
-    if name == "ParamType":
-        import warnings
-
-        from ._param_type import ParamType
-
-        warnings.warn(
-            "django_typer.parsers.ParamType is deprecated and will be removed in 5.0. "
-            "Implement parsers as callables instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return ParamType
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+from ._param_type import ParamType as ParamType
