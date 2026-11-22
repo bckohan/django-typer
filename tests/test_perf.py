@@ -82,12 +82,31 @@ def test_performance_regression():
     print(f"\ttime: {typer_no_app_time:0.4f}")
     print(f"\tmodules: {len(mods_typer_no_app)}")
 
-    # notify us if adding typer inflates module count by more than 25 percent -
-    # Typer 0.29+ validates parameters with Pydantic, which alone loads ~60 modules
-    assert len(mods_no_typer) / len(mods_typer) > 0.8, (
+    # Typer 0.29+ validates parameters with Pydantic, which alone loads ~60 modules.
+    # That cost is Typer's, not ours to control - leave it out of the budget so the
+    # check stays sensitive to everything else.
+    def budgeted(modules):
+        return [
+            mod
+            for mod in modules
+            if mod.split(".")[0]
+            not in {
+                "pydantic",
+                "pydantic_core",
+                "annotated_types",
+                "typing_inspection",
+            }
+        ]
+
+    mods_no_typer = budgeted(mods_no_typer)
+    mods_typer = budgeted(mods_typer)
+    mods_typer_no_app = budgeted(mods_typer_no_app)
+
+    # notify us if adding typer inflates module count by more than 10 percent
+    assert len(mods_no_typer) / len(mods_typer) > 0.9, (
         f"Typer modules added: \n{pformat(set(mods_typer) - set(mods_no_typer))}"
     )
-    assert len(mods_no_typer) / len(mods_typer_no_app) > 0.8, (
+    assert len(mods_no_typer) / len(mods_typer_no_app) > 0.9, (
         f"Typer modules added: \n{pformat(set(mods_typer_no_app) - set(mods_no_typer))}"
     )
 
