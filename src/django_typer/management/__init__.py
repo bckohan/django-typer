@@ -533,26 +533,64 @@ class Context(TyperContext):
         self.params = self.ParamDict(merged, supplied=list(self.supplied_params.keys()))
 
 
-def _label_with_parser_name(param: _click.Parameter) -> None:
+def _parser_label(param: CoreTyperOption | CoreTyperArgument) -> str | None:
     """
     Typer_ labels parameter types in help (``<int>``) from the type annotation. Before
-    Typer_ 0.29 a parameter with a ``parser`` was labeled with the parser's
-    ``__name__``, which our parsers use to describe their input (e.g. ``<uuid>`` for a
-    :class:`~django_typer.parsers.model.ModelObjectParser` on a UUIDField). Restore
-    that label for parameters that have a named parser.
+    Typer_ 0.29 a parameter with a ``parser`` was labeled with the parser's name,
+    which our parsers use to describe their input (e.g. ``<uuid>`` for a
+    :class:`~django_typer.parsers.model.ModelObjectParser` on a UUIDField). Return
+    that label for parameters that have a named parser, otherwise None.
+
+    The name is the parser's ``__name__``, or its ``name`` attribute (the deprecated
+    ``ParamType`` convention). Choice and tuple parameters, and parsers without a
+    usable name (lambdas), keep Typer_'s label.
     """
-    descriptor = getattr(param, "type_descriptor", None)
-    parser = getattr(getattr(descriptor, "parameter_info", None), "parser", None)
-    name = getattr(parser, "__name__", None)
-    if not name or not isinstance(name, str):
-        return
-    label = f"<list[{name}]>" if descriptor.is_list else f"<{name}>"  # type: ignore[union-attr]
+    descriptor = param.type_descriptor
+    parser = descriptor.parameter_info.parser
+    if parser is None or descriptor.is_choice or descriptor.is_tuple:
+        return None
+    name = getattr(parser, "__name__", None) or getattr(parser, "name", None)
+    if not (name and isinstance(name, str)) or not name.isprintable() or "<" in name:
+        return None
+    return f"<list[{name}]>" if descriptor.is_list else f"<{name}>"
 
-    def display_type(ctx: _click.Context) -> str:
-        return label
 
-    # instance attribute shadows the method for this parameter only
-    param.display_type = display_type  # type: ignore[attr-defined]
+class DTOption(CoreTyperOption):
+    """
+    The option class used for the parameters of
+    :class:`~django_typer.management.TyperCommand` commands and groups.
+    """
+
+    # no added state - instances Typer built are switched to this class
+    __slots__ = ()
+
+    def display_type(self, ctx: _click.Context) -> str:
+        return _parser_label(self) or super().display_type(ctx)
+
+
+class DTArgument(CoreTyperArgument):
+    """
+    The argument class used for the parameters of
+    :class:`~django_typer.management.TyperCommand` commands and groups.
+    """
+
+    # no added state - instances Typer built are switched to this class
+    __slots__ = ()
+
+    def display_type(self, ctx: _click.Context) -> str:
+        return _parser_label(self) or super().display_type(ctx)
+
+
+def _use_dt_params(params: t.Iterable[_click.Parameter]) -> None:
+    """
+    Typer_ offers no hook to choose the classes it builds parameters from, so the
+    parameters it built are switched to our subclasses, which add no state.
+    """
+    for param in params:
+        if type(param) is CoreTyperOption:
+            param.__class__ = DTOption
+        elif type(param) is CoreTyperArgument:
+            param.__class__ = DTArgument
 
 
 class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
@@ -689,8 +727,7 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
         **kwargs: t.Any,
     ):
         params = params or []
-        for param in params:
-            _label_with_parser_name(param)
+        _use_dt_params(params)
         self._callback = callback
         expected = [
             param.name for param in params[1 if self.is_method else 0 :] if param.name

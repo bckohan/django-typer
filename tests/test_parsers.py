@@ -66,3 +66,25 @@ class TestParserTypeLabels(TestCase):
         self.assertEqual(retcode, 0, stderr)
         self.assertRegex(stdout, r"django_apps\.*\s+<list\[APP_LABEL\]>")
         self.assertRegex(stdout, r"--option\s+<APP_LABEL>")
+
+    def test_param_type_name_label(self):
+        stdout, stderr, retcode = run_command(
+            "deprecated_param_type", "--no-color", "--help"
+        )
+        self.assertEqual(retcode, 0, stderr)
+        self.assertRegex(stdout, r"value\s+<upper>")
+
+    def test_label_rules(self):
+        stdout, stderr, retcode = run_command("parser_labels", "--no-color", "--help")
+        self.assertEqual(retcode, 0, stderr)
+        # named function parsers and instances with a name attribute label the type
+        self.assertRegex(stdout, r"--func\s+<named>")
+        self.assertRegex(stdout, r"--funcs\s+<list\[named\]>")
+        self.assertRegex(stdout, r"--instance\s+<named_instance>")
+        # parsers without a usable name keep the annotation label
+        self.assertRegex(stdout, r"--unnamed\s+<str>")
+        self.assertRegex(stdout, r"--anon\s+<str>")
+        self.assertNotIn("lambda", stdout)
+        # tuples keep their arity and choices keep their values
+        self.assertRegex(stdout, r"--pair\s+<str,str>")
+        self.assertRegex(stdout, r"--color\s+<red\|blue>")
