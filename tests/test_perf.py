@@ -1,4 +1,7 @@
+import json
 import os
+import subprocess
+import sys
 from tests.utils import run_command
 import time
 import pytest
@@ -82,25 +85,44 @@ def test_performance_regression():
     print(f"\ttime: {typer_no_app_time:0.4f}")
     print(f"\tmodules: {len(mods_typer_no_app)}")
 
-    # Typer 0.29+ validates parameters with Pydantic, which alone loads ~60 modules.
-    # That cost is Typer's, not ours to control - leave it out of the budget so the
-    # check stays sensitive to everything else.
+    # Typer 0.29+ validates parameters with Pydantic, which alone loads ~60 modules
+    # plus whatever it needs from the standard library on this Python. That cost is
+    # Typer's, not ours to control - measure it and leave it out of the budget so
+    # the check stays sensitive to everything else.
+    pydantic_cost = set(
+        json.loads(
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    # the modules Typer's Pydantic layer adds on top of Typer
+                    "import sys, json, typer; before = set(sys.modules); "
+                    "import typer._adapters; "
+                    # building an adapter loads more, e.g. the plugin loader
+                    "typer._adapters.TypeAdapter(int); "
+                    "print(json.dumps(sorted("
+                    "m for m in set(sys.modules) - before "
+                    "if m.split('.')[0] != 'typer')))",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                env=env,
+            ).stdout
+        )
+    )
+    assert any(mod.startswith("pydantic") for mod in pydantic_cost)
+
     def budgeted(modules):
-        return [
-            mod
-            for mod in modules
-            if mod.split(".")[0]
-            not in {
-                "pydantic",
-                "pydantic_core",
-                "annotated_types",
-                "typing_inspection",
-            }
-        ]
+        return [mod for mod in modules if mod not in pydantic_cost]
 
     mods_no_typer = budgeted(mods_no_typer)
     mods_typer = budgeted(mods_typer)
     mods_typer_no_app = budgeted(mods_typer_no_app)
+    print(
+        f"\nBudgeted modules (less {len(pydantic_cost)} for Pydantic): "
+        f"{len(mods_no_typer)} / {len(mods_typer)} / {len(mods_typer_no_app)}"
+    )
 
     # notify us if adding typer inflates module count by more than 10 percent
     assert len(mods_no_typer) / len(mods_typer) > 0.9, (
