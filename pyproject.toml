@@ -250,7 +250,7 @@ profiling = [
 ]
 # machine translate the library's messages with just translate
 translate = [
-    "django-autotranslate[google]>=2.0,<3.0",
+    "django-autotranslate[google]>=2.1,<3.0",
 ]
 psycopg3 = [
     "psycopg>=3.1.8",
