@@ -24,8 +24,10 @@ v4.3.0 (2026-11-21)
 * Invalid parameter values are reported with Typer_ 0.29's Pydantic based messages, e.g.
   ``Input should be a valid integer, unable to parse string as an integer`` instead of
   ``'a' is not a valid int.`` A ``ValueError`` raised by a custom parser is now reported as
-  ``Value error, <message>``. Raise :exc:`~django.core.management.CommandError` or
-  ``typer.BadParameter`` from parsers to control the message.
+  ``Value error, <message>``, and an ``AssertionError`` raised by a parser is now also
+  reported as an invalid value (``Assertion failed, <message>``) instead of propagating.
+  Raise :exc:`~django.core.management.CommandError` or ``typer.BadParameter`` from parsers
+  to control the message.
 
 
 v4.2.1 (2026-11-21)
@@ -167,7 +169,9 @@ Migrating from 3.x to 4.x
   messages for invalid values changed, e.g. ``Input should be a valid integer, unable to parse
   string as an integer`` instead of ``'a' is not a valid int.``, and ``ValueError`` messages
   raised by custom parsers are prefixed with ``Value error,``. Update any tests that match on
-  these messages.
+  these messages. Pydantic_ also treats an ``AssertionError`` raised inside a parser as a
+  validation failure: it is reported as a usage error (``Assertion failed, ...``) rather than
+  propagating with a traceback, so do not rely on ``assert`` in parsers to surface bugs.
 
 * Options declared with ``prompt=True, prompt_required=False`` no longer prompt when the flag is
   passed without a value, doing so is now a usage error. Omit the flag to be prompted or pass
