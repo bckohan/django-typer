@@ -86,18 +86,20 @@ class TestChaining(TestCase):
         )
 
     def test_chain_rejects_optional_arguments(self):
+        from typer._coercion import resolve_type_descriptor
         from typer.core import TyperArgument
+        from typer.models import ArgumentInfo
+
+        def argument(required: bool) -> TyperArgument:
+            return TyperArgument(
+                param_decls=["arg"],
+                required=required,
+                nargs=1,
+                type_descriptor=resolve_type_descriptor(str, ArgumentInfo()),
+            )
 
         ChainGroup = type("ChainGroup", (DTGroup,), {"chain": True})
         with self.assertRaises(RuntimeError):
-            ChainGroup(
-                name="grp",
-                callback=None,
-                params=[TyperArgument(param_decls=["arg"], required=False, nargs=1)],
-            )
+            ChainGroup(name="grp", callback=None, params=[argument(required=False)])
         # required arguments are fine
-        ChainGroup(
-            name="grp",
-            callback=None,
-            params=[TyperArgument(param_decls=["arg"], required=True, nargs=1)],
-        )
+        ChainGroup(name="grp", callback=None, params=[argument(required=True)])
