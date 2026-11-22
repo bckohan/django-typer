@@ -20,13 +20,14 @@ parsed value. Use a function for simple parsers, or a class that implements
     class Interval:
         def __init__(self, unit: str = "s"):
             self.unit = unit
-            self.__name__ = unit  # Typer uses this as the type label in help
+            # django-typer labels the parameter's type in help with this name
+            self.__name__ = unit
 
         def __call__(self, value: str | float) -> float:
-            if isinstance(value, float):
-                return value
             try:
-                return float(value.removesuffix(self.unit))
+                if isinstance(value, str):
+                    value = value.removesuffix(self.unit)
+                return float(value)
             except ValueError as err:
                 raise CommandError(f"{value} is not a valid interval.") from err
 
@@ -37,6 +38,11 @@ parsed value. Use a function for simple parsers, or a class that implements
             interval: t.Annotated[float, typer.Argument(parser=Interval("ms"))],
         ):
             ...
+
+Parameters of :class:`~django_typer.management.TyperCommand` commands are labeled in
+help with the ``__name__`` of their parser (or its ``name`` attribute), so the example
+above shows ``<ms>``. Plain Typer_ apps label the parameter from its type annotation
+instead.
 
 This package contains a collection of parsers that turn strings into useful
 Django types. Pass these parsers to the `parser` argument of ``typer.Option`` and
