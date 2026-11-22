@@ -42,23 +42,23 @@ class TestGroupsHowto(TestCase):
     root_help = """
 
      Usage: ./howto.py groups [OPTIONS] COMMAND [ARGS]...                           
-
+                                                                                
     ╭─ Options ────────────────────────────────────────────────────────────────────╮
-    │ --help          Show this message and exit.                                  │
+    │ --help        <bool>  Show this message and exit.                            │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-    │ --version                    Show program's version number and exit.         │
+    │ --version            <bool>  Show program's version number and exit.         │
     │ --settings           <str>   The Python path to a settings module, e.g.      │
     │                              "myproject.settings.main". If this isn't        │
     │                              provided, the DJANGO_SETTINGS_MODULE            │
     │                              environment variable will be used.              │
     │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
     │                              "/home/djangoprojects/myproject".               │
-    │ --traceback                  Raise on CommandError exceptions                │
-    │ --show-locals                Print local variables in tracebacks.            │
-    │ --no-color                   Don't colorize the command output.              │
-    │ --force-color                Force colorization of the command output.       │
-    │ --skip-checks                Skip system checks.                             │
+    │ --traceback          <bool>  Raise on CommandError exceptions                │
+    │ --show-locals        <bool>  Print local variables in tracebacks.            │
+    │ --no-color           <bool>  Don't colorize the command output.              │
+    │ --force-color        <bool>  Force colorization of the command output.       │
+    │ --skip-checks        <bool>  Skip system checks.                             │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     ╭─ Commands ───────────────────────────────────────────────────────────────────╮
     │ group1                                                                       │
@@ -69,10 +69,10 @@ class TestGroupsHowto(TestCase):
     group1_help = """
 
      Usage: ./howto.py groups group1 [OPTIONS] COMMAND [ARGS]...                    
-
+                                                                                
     ╭─ Options ────────────────────────────────────────────────────────────────────╮
-    │ --common-option    --no-common-option      [default: no-common-option]       │
-    │ --help                                     Show this message and exit.       │
+    │ --common-option    --no-common-option    <bool>  [default: no-common-option] │
+    │ --help                                   <bool>  Show this message and exit. │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     ╭─ Commands ───────────────────────────────────────────────────────────────────╮
     │ grp1-subcommand1                                                             │
@@ -84,9 +84,9 @@ class TestGroupsHowto(TestCase):
     subgroup1_help = """
 
      Usage: ./howto.py groups group1 subgroup1 [OPTIONS] COMMAND [ARGS]...          
-
+                                                                                
     ╭─ Options ────────────────────────────────────────────────────────────────────╮
-    │ --help          Show this message and exit.                                  │
+    │ --help        <bool>  Show this message and exit.                            │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     ╭─ Commands ───────────────────────────────────────────────────────────────────╮
     │ subgrp-command                                                               │
@@ -162,9 +162,9 @@ class TestDefaultOptionsHowto(TestCase):
     cmd_help = """
 
      Usage: ./howto.py default_options [OPTIONS]                                    
-
+                                                                                
     ╭─ Options ────────────────────────────────────────────────────────────────────╮
-    │ --help          Show this message and exit.                                  │
+    │ --help        <bool>  Show this message and exit.                            │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     ╭─ Django ─────────────────────────────────────────────────────────────────────╮
     │ --verbosity          <int range> [0<=x<=3]  Verbosity level; 0=minimal       │
@@ -172,19 +172,19 @@ class TestDefaultOptionsHowto(TestCase):
     │                                             2=verbose output, 3=very verbose │
     │                                             output                           │
     │                                             [default: 1]                     │
-    │ --version                                   Show program's version number    │
+    │ --version            <bool>                 Show program's version number    │
     │                                             and exit.                        │
     │ --pythonpath         <path>                 A directory to add to the Python │
     │                                             path, e.g.                       │
     │                                             "/home/djangoprojects/myproject… │
-    │ --traceback                                 Raise on CommandError exceptions │
-    │ --show-locals                               Print local variables in         │
+    │ --traceback          <bool>                 Raise on CommandError exceptions │
+    │ --show-locals        <bool>                 Print local variables in         │
     │                                             tracebacks.                      │
-    │ --no-color                                  Don't colorize the command       │
+    │ --no-color           <bool>                 Don't colorize the command       │
     │                                             output.                          │
-    │ --force-color                               Force colorization of the        │
+    │ --force-color        <bool>                 Force colorization of the        │
     │                                             command output.                  │
-    │ --skip-checks                               Skip system checks.              │
+    │ --skip-checks        <bool>                 Skip system checks.              │
     ╰──────────────────────────────────────────────────────────────────────────────╯
     """
 

@@ -35,7 +35,7 @@ adapted_adapted_help = """
 Usage: ./manage.py adapted adapted [OPTIONS] {message}
 
 Arguments:
-  message  [required]
+  message <str>  [required]
 
 Options:
   --help  Show this message and exit.
@@ -46,21 +46,21 @@ adapted_rich_help = """
  Usage: ./manage.py adapted [OPTIONS] COMMAND [ARGS]...                         
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ adapted                                                                      │
@@ -77,7 +77,7 @@ adapted_adapted_rich_help = """
 │ *    message      <str>  [required]                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -87,8 +87,8 @@ Usage: ./manage.py adapted echo [OPTIONS] {msg1} {msg2}
   Echo both messages.
 
 Arguments:
-  msg1  [required]
-  msg2  [required]
+  msg1 <str>  [required]
+  msg2 <str>  [required]
 
 Options:
   --help  Show this message and exit.
@@ -105,7 +105,7 @@ adapted_echo_rich_help = """
 │ *    msg2      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -117,21 +117,21 @@ adapted_help_no_adapters = """
 │ *    message      <str>  [required]                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                    Show program's version number and exit.         │
+│ --version            <bool>  Show program's version number and exit.         │
 │ --settings           <str>   The Python path to a settings module, e.g.      │
 │                              "myproject.settings.main". If this isn't        │
 │                              provided, the DJANGO_SETTINGS_MODULE            │
 │                              environment variable will be used.              │
 │ --pythonpath         <path>  A directory to add to the Python path, e.g.     │
 │                              "/home/djangoprojects/myproject".               │
-│ --traceback                  Raise on CommandError exceptions                │
-│ --show-locals                Print local variables in tracebacks.            │
-│ --no-color                   Don't colorize the command output.              │
-│ --force-color                Force colorization of the command output.       │
-│ --skip-checks                Skip system checks.                             │
+│ --traceback          <bool>  Raise on CommandError exceptions                │
+│ --show-locals        <bool>  Print local variables in tracebacks.            │
+│ --no-color           <bool>  Don't colorize the command output.              │
+│ --force-color        <bool>  Force colorization of the command output.       │
+│ --skip-checks        <bool>  Skip system checks.                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 adapted_help_no_adapters_no_rich = """

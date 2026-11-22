@@ -4,6 +4,7 @@
  Print the setting value.                                                       
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ *  --safe    --no-safe      Do not assume the setting exists. [required]     │
-│    --help                   Show this message and exit.                      │
+│ *  --safe    --no-safe    <bool>  Do not assume the setting exists.          │
+│                                   [required]                                 │
+│    --help                 <bool>  Show this message and exit.                │
 ╰──────────────────────────────────────────────────────────────────────────────╯

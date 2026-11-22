@@ -15,6 +15,11 @@ v4.3.0 (2026-11-21)
   Write parsers as callables instead, see :mod:`django_typer.parsers`.
 * :class:`~django_typer.parsers.model.ModelObjectParser` is now a plain callable class and no
   longer derives from ``ParamType``.
+* Help output follows Typer_ 0.29's formatting: flags are labeled ``<bool>`` and list
+  parameters ``<list[...]>``. Parameters with a ``parser`` are still labeled with the
+  parser's ``__name__`` (e.g. ``<uuid>`` for a
+  :class:`~django_typer.parsers.model.ModelObjectParser` on a UUIDField), which Typer_ 0.29
+  no longer does on its own.
 
 
 v4.2.1 (2026-11-21)

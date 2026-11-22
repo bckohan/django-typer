@@ -533,6 +533,28 @@ class Context(TyperContext):
         self.params = self.ParamDict(merged, supplied=list(self.supplied_params.keys()))
 
 
+def _label_with_parser_name(param: _click.Parameter) -> None:
+    """
+    Typer_ labels parameter types in help (``<int>``) from the type annotation. Before
+    Typer_ 0.29 a parameter with a ``parser`` was labeled with the parser's
+    ``__name__``, which our parsers use to describe their input (e.g. ``<uuid>`` for a
+    :class:`~django_typer.parsers.model.ModelObjectParser` on a UUIDField). Restore
+    that label for parameters that have a named parser.
+    """
+    descriptor = getattr(param, "type_descriptor", None)
+    parser = getattr(getattr(descriptor, "parameter_info", None), "parser", None)
+    name = getattr(parser, "__name__", None)
+    if not name or not isinstance(name, str):
+        return
+    label = f"<list[{name}]>" if descriptor.is_list else f"<{name}>"  # type: ignore[union-attr]
+
+    def display_type(ctx: _click.Context) -> str:
+        return label
+
+    # instance attribute shadows the method for this parameter only
+    param.display_type = display_type  # type: ignore[attr-defined]
+
+
 class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
     """
     A mixin we use to add additional needed contextual awareness to click Commands
@@ -667,6 +689,8 @@ class DjangoTyperMixin(with_typehint(CoreTyperGroup)):  # type: ignore[misc]
         **kwargs: t.Any,
     ):
         params = params or []
+        for param in params:
+            _label_with_parser_name(param)
         self._callback = callback
         expected = [
             param.name for param in params[1 if self.is_method else 0 :] if param.name

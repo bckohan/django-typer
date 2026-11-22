@@ -15,15 +15,15 @@ native_override_init_help_rich = """
  Usage: ./manage.py native_override_init [OPTIONS] COMMAND [ARGS]...            
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --bog     --no-bog      [default: no-bog]                                    │
-│ --help                  Show this message and exit.                          │
+│ --bog     --no-bog    <bool>  [default: no-bog]                              │
+│ --help                <bool>  Show this message and exit.                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
 │ --verbosity        <int range> [0<=x<=3]  Verbosity level; 0=minimal output, │
 │                                           1=normal output, 2=verbose output, │
 │                                           3=very verbose output              │
 │                                           [default: 0]                       │
-│ --version                                 Show program's version number and  │
+│ --version          <bool>                 Show program's version number and  │
 │                                           exit.                              │
 │ --settings         <str>                  The Python path to a settings      │
 │                                           module, e.g.                       │
@@ -31,7 +31,7 @@ native_override_init_help_rich = """
 │                                           isn't provided, the                │
 │                                           DJANGO_SETTINGS_MODULE environment │
 │                                           variable will be used.             │
-│ --no-color                                Don't colorize the command output. │
+│ --no-color         <bool>                 Don't colorize the command output. │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ main                                                                         │
@@ -48,8 +48,8 @@ native_override_init_grp1_help_rich = """
  Override GRP1 (initialize only)                                                
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --flag        <int>  [default: 4]                                            │
-│ --help               Show this message and exit.                             │
+│ --flag        <int>   [default: 4]                                           │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ cmd2                                                                         │
@@ -65,7 +65,7 @@ native_groups_grp2_help_rich = """
  test_app2::grp2                                                                
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ cmd1  test_app2::grp2::grp2_cmd1                                             │
@@ -82,7 +82,7 @@ native_groups_grp2_cmd1_help_rich = """
 │ *    g2arg1      <int>  [required]                                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -224,10 +224,10 @@ native_tweaks_help_rich = """
 │ *    name      <str>  [required]                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Django ─────────────────────────────────────────────────────────────────────╮
-│ --version                                  Show program's version number and │
+│ --version           <bool>                 Show program's version number and │
 │                                            exit.                             │
 │ --verbosity         <int range> [0<=x<=3]  Verbosity level; 0=minimal        │
 │                                            output, 1=normal output,          │
@@ -244,7 +244,7 @@ native_tweaks_help_rich = """
 │ --pythonpath        <path>                 A directory to add to the Python  │
 │                                            path, e.g.                        │
 │                                            "/home/djangoprojects/myproject". │
-│ --no-color                                 Don't colorize the command        │
+│ --no-color          <bool>                 Don't colorize the command        │
 │                                            output.                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
@@ -255,8 +255,8 @@ native_override_grp1_help_rich = """
  Usage: ./manage.py native_override grp1 [OPTIONS] COMMAND [ARGS]...            
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --flag    --no-flag      [default: no-flag]                                  │
-│ --help                   Show this message and exit.                         │
+│ --flag    --no-flag    <bool>  [default: no-flag]                            │
+│ --help                 <bool>  Show this message and exit.                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ cmd2                                                                         │
@@ -272,9 +272,9 @@ native_override_subgrp_help_rich = """
  Override SUBGROUP                                                              
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --option1    --no-option1      [default: no-option1]                         │
-│ --option2    --no-option2      [default: no-option2]                         │
-│ --help                         Show this message and exit.                   │
+│ --option1    --no-option1    <bool>  [default: no-option1]                   │
+│ --option2    --no-option2    <bool>  [default: no-option2]                   │
+│ --help                       <bool>  Show this message and exit.             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ───────────────────────────────────────────────────────────────────╮
 │ sg-cmd1  Subgroup command 1. No args.                                        │
@@ -289,7 +289,7 @@ native_override_sgcmd1_help_rich = """
  Subgroup command 1. No args.                                                   
                                                                                 
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
@@ -303,7 +303,7 @@ native_override_sgcmd2_help_rich = """
 │ *    number      <int>  [required]                                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --help          Show this message and exit.                                  │
+│ --help        <bool>  Show this message and exit.                            │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 """
 
