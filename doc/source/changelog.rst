@@ -7,8 +7,9 @@ Change Log
 v4.3.0 (2026-11-21)
 ===================
 
-* Support typer 0.29.
-* Arguments are now validated using Pydantic and it is a required dependency.
+* Support Typer_ 0.29.
+* Parameter values are now validated with Pydantic_, which Typer_ 0.29 depends on. Pydantic_
+  is installed as a dependency of Typer_, django-typer_ does not depend on it directly.
 * Deprecated ``django_typer.parsers.ParamType``. Typer_ 0.29 removed the vendored Click_
   ``ParamType``; django-typer_ now provides a minimal stand-in so existing subclasses keep
   working, but importing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0.
