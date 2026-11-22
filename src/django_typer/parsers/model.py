@@ -6,7 +6,6 @@ from uuid import UUID
 from django.core.management import CommandError
 from django.db import models
 from typer._click import Context, Parameter
-from typer._click.types import ParamType
 
 from django_typer.completers.model import ModelObjectCompleter
 
@@ -22,7 +21,7 @@ class ReturnType(Enum):
     """Return a queryset of model instances that match the field value."""
 
 
-class ModelObjectParser(ParamType):
+class ModelObjectParser:
     """
     A parser that will turn strings into model object instances based on the
     configured lookup field and model class.
@@ -43,10 +42,12 @@ class ModelObjectParser(ParamType):
                 ],
             ):
 
+    Instances are callable, pass one to the ``parser`` argument of ``typer.Option`` or
+    ``typer.Argument``.
+
     .. note::
 
-        Typer_ does not respect the shell_complete functions on ParamTypes passed as
-        parsers. To add shell_completion see
+        Typer_ does not use the parser for shell completion. To add shell_completion see
         :class:`~django_typer.completers.ModelObjectCompleter` or the
         :func:`~django_typer.utils.model_parser_completer` convenience function.
 
@@ -156,7 +157,30 @@ class ModelObjectParser(ParamType):
             self._lookup = "__iexact"
         self.__name__ = self._get_metavar()
 
-    def convert(self, value: t.Any, param: Parameter | None, ctx: Context | None):
+    def __call__(
+        self,
+        value: t.Any,
+        param: Parameter | None = None,
+        ctx: Context | None = None,
+    ) -> t.Any:
+        """
+        Parse the given value, see :meth:`convert`.
+
+        :param value: The value to parse.
+        :param param: The parameter that the value is associated with, Typer_ does not
+            pass this.
+        :param ctx: The context of the command, Typer_ does not pass this.
+        """
+        if value is None:
+            return None
+        return self.convert(value, param, ctx)
+
+    def convert(
+        self,
+        value: t.Any,
+        param: Parameter | None = None,
+        ctx: Context | None = None,
+    ):
         """
         Invoke the parsing action on the given string. If the value is
         already a model instance of the expected type the value will

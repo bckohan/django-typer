@@ -4,6 +4,19 @@
 Change Log
 ==========
 
+v4.3.0 (2026-11-21)
+===================
+
+* Support typer 0.29.
+* Arguments are now validated using Pydantic and it is a required dependency.
+* Deprecated ``django_typer.parsers.ParamType``. Typer_ 0.29 removed the vendored Click_
+  ``ParamType``; django-typer_ now provides a minimal stand-in so existing subclasses keep
+  working, but importing it emits a :exc:`DeprecationWarning` and it will be removed in 5.0.
+  Write parsers as callables instead, see :mod:`django_typer.parsers`.
+* :class:`~django_typer.parsers.model.ModelObjectParser` is now a plain callable class and no
+  longer derives from ``ParamType``.
+
+
 v4.2.1 (2026-11-21)
 ===================
 
@@ -106,6 +119,22 @@ Migrating from 3.x to 4.x
 
         # 4.x
         from django_typer.parsers import Context, Parameter, ParamType
+
+    Starting with 4.3 (Typer 0.29+) ``ParamType`` is deprecated and will be removed in 5.0.
+    Typer_ calls parsers with the value only, so write them as plain callables, or classes
+    that implement ``__call__``. To port a ``ParamType`` subclass, drop the base class and
+    add a ``__call__`` that forwards to ``convert``:
+
+    .. code-block:: python
+
+        class MyType:
+            def __call__(self, value, param=None, ctx=None):
+                return self.convert(value, param, ctx)
+
+            def convert(self, value, param, ctx): ...
+
+    :class:`~django_typer.parsers.model.ModelObjectParser` no longer derives from
+    ``ParamType``, ``isinstance`` checks against it will no longer match.
 
   - Use ``typer.Exit``, ``typer.Abort`` and ``typer.BadParameter`` in place of their ``click``
     counterparts. Raising :exc:`~django.core.management.CommandError` remains the recommended
