@@ -411,10 +411,10 @@ class _ParsedArgs(SimpleNamespace):
         self.traceback = kwargs.get("traceback", TyperCommand._traceback)
 
     @staticmethod
-    def _as_str(value: t.Any) -> str | None:
-        if value is None or isinstance(value, str):
-            return value
-        return os.fspath(value) if isinstance(value, os.PathLike) else str(value)
+    def _as_str(value: t.Any) -> t.Any:
+        # only paths are converted - any other type a command overrides these
+        # parameters with (e.g. a falsy flag) is passed through as before
+        return os.fspath(value) if isinstance(value, os.PathLike) else value
 
     # Django's handle_default_options() reads settings and pythonpath as attributes
     # and writes them into os.environ and sys.path, which need strings. Typer hands
@@ -422,7 +422,7 @@ class _ParsedArgs(SimpleNamespace):
     # parameters. These properties give Django strings while vars() - what is
     # passed on to execute() - keeps the converted values the command expects.
     @property
-    def settings(self) -> str | None:
+    def settings(self) -> t.Any:
         return self._as_str(self.__dict__.get("settings"))
 
     @settings.setter
@@ -430,7 +430,7 @@ class _ParsedArgs(SimpleNamespace):
         self.__dict__["settings"] = value
 
     @property
-    def pythonpath(self) -> str | None:
+    def pythonpath(self) -> t.Any:
         return self._as_str(self.__dict__.get("pythonpath"))
 
     @pythonpath.setter
