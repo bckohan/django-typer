@@ -46,6 +46,14 @@ class TestParamTypeDeprecation(TestCase):
         self.assertEqual(param_type("value"), "value")
         with self.assertRaises(typer.BadParameter):
             param_type.fail("bad")
+        # the rest of click's interface is present with its defaults
+        self.assertEqual(param_type.to_info_dict(), {"param_type": "", "name": "text"})
+        self.assertIsNone(param_type.get_metavar(None, None))
+        self.assertIsNone(param_type.get_missing_message(None, None))
+        self.assertEqual(param_type.split_envvar_value("a b"), ["a", "b"])
+        self.assertEqual(param_type.shell_complete(None, None, ""), [])
+        self.assertEqual((param_type.is_composite, param_type.arity), (False, 1))
+        self.assertIsNone(param_type.envvar_list_splitter)
 
     def test_param_type_subclass_parser(self):
         self.assertEqual(call_command("deprecated_param_type", "abc"), "ABC")
